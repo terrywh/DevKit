@@ -1,0 +1,10 @@
+/bin
+/etc
+/var
+/.DS_Store
+/.vscode
+/node_modules
+/bun.lockb
+/wemeet-hybrid
+/*/*.txt
+/public
