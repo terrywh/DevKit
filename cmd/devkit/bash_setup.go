@@ -35,7 +35,7 @@ func (s *BashSetup) isthere() bool {
 }
 
 func (s *BashSetup) install() {
-	path := "/Users/terryhaowu/data/htdocs/github.com/terrywh/dev-kit/bin/trzsz_linux_amd64.tar.gz"
+	path := "/Users/terryhaowu/data/htdocs/github.com/terrywh/devkit/bin/trzsz_linux_amd64.tar.gz"
 	file, _ := os.Open(path)
 	defer file.Close()
 	io.WriteString(s.server, "base64 -di > /tmp/trzsz_linux_amd64.tar.gz\r")
@@ -48,7 +48,7 @@ func (s *BashSetup) install() {
 	time.Sleep(100 * time.Millisecond)
 
 	io.WriteString(s.server, "tar x -C /tmp -f /tmp/trzsz_linux_amd64.tar.gz\r")
-	io.WriteString(s.server, "mv /tmp/trzsz_1.1.4_linux_x86_64 /usr/local/trzsz\r")
+	io.WriteString(s.server, "mv /tmp/trzsz_1.1.5_linux_x86_64 /usr/local/trzsz\r")
 	io.WriteString(s.server, "rm -rf /tmp/trzsz_linux_amd64.tar.gz\r")
 	io.WriteString(s.server, "ln -s /usr/local/trzsz/trz /usr/bin/trz\r")
 	io.WriteString(s.server, "ln -s /usr/local/trzsz/tsz /usr/bin/tsz\r")
