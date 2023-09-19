@@ -13,7 +13,6 @@
     function onListSubmit(e) {
         // connect.submit()
         $route.put("route", e.detail.index);
-        console.log("submit");
     }
 
     function onListSelect(e) {
@@ -21,12 +20,13 @@
     }
 
     function onFormSubmit(e) {
-        // connect.submit();
+        doTerminal()
     }
 
     function onFormSave(e) {
         const index = $sshEntry.append($route.get("entry", 0), e.detail);
         entryForm.update($sshEntry.fetch(index));
+        $route.put("entry", index);
     }
     
     async function onFilterSubmit(e) {

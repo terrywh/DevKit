@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	"git.woa.com/terryhaowu/hybrid-utility/util"
+	"github.com/terrywh/dev-kit/util"
 )
 
 type BashSetup struct {
@@ -35,7 +35,7 @@ func (s *BashSetup) isthere() bool {
 }
 
 func (s *BashSetup) install() {
-	path := "/Users/terryhaowu/data/htdocs/git.woa.com/terryhaowu/hybrid-utility/bin/trzsz_linux_amd64.tar.gz"
+	path := "/Users/terryhaowu/data/htdocs/github.com/terrywh/dev-kit/bin/trzsz_linux_amd64.tar.gz"
 	file, _ := os.Open(path)
 	defer file.Close()
 	io.WriteString(s.server, "base64 -di > /tmp/trzsz_linux_amd64.tar.gz\r")

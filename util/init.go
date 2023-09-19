@@ -46,7 +46,7 @@ func OnInit(conf interface{}) {
 		err = d.Decode(DefaultConfig)
 	}
 	if err != nil {
-		log.Fatal("failed to initialize config: ", path, ", due to: ", err)
+		log.Println("<warning> failed to initialize config: ", path, ", due to: ", err)
 		return
 	}
 }

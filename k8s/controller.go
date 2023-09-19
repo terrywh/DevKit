@@ -10,7 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"git.woa.com/terryhaowu/hybrid-utility/util"
+	"github.com/terrywh/dev-kit/util"
 )
 
 type Controller struct {
@@ -24,7 +24,7 @@ func NewController() *Controller {
 	os.Mkdir(path, 0o755)
 
 	return &Controller{
-		Executable: "/Users/terryhaowu/data/htdocs/git.woa.com/terryhaowu/hybrid-utility/bin/kubectl_macos_arm64",
+		Executable: "/Users/terryhaowu/data/htdocs/github.com/terrywh/dev-kit/bin/kubectl_macos_arm64",
 		ConfigDir: path,
 	}
 }

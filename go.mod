@@ -1,4 +1,4 @@
-module git.woa.com/terryhaowu/hybrid-utility
+module github.com/terrywh/dev-kit
 
 go 1.19
 

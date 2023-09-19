@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"runtime"
 
-	"git.woa.com/terryhaowu/hybrid-utility/util"
+	"github.com/terrywh/dev-kit/util"
 )
 
 // Request ...
