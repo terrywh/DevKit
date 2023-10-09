@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/terrywh/dev-kit/k8s"
-	"github.com/terrywh/dev-kit/util"
+	"github.com/terrywh/devkit/k8s"
+	"github.com/terrywh/devkit/util"
 )
 
 type ClusterServer struct {

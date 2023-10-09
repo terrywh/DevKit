@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/terrywh/dev-kit/util"
+	"github.com/terrywh/devkit/util"
 )
 
 type BashSetup struct {

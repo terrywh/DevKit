@@ -29,7 +29,9 @@
         dispatch("select", {index});
     }
 
-    function onSubmit(index) {}
+    function onSubmit(index) {
+        dispatch("submit", {index})
+    }
 
     function onDelete(index) {
         $route.put("entry", $tkeEntry.remove(index));

@@ -1,4 +1,4 @@
-module github.com/terrywh/dev-kit
+module github.com/terrywh/devkit
 
 go 1.19
 

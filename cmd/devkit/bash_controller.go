@@ -15,8 +15,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/terrywh/dev-kit/k8s"
-	"github.com/terrywh/dev-kit/ssh"
+	"github.com/terrywh/devkit/k8s"
+	"github.com/terrywh/devkit/ssh"
 )
 
 type BashController struct {

@@ -73,7 +73,7 @@ func (api *AppServer) onReady() {
 	}))
 	
 	// systray.SetIcon()
-	systray.SetTitle("Shell")
+	systray.SetTitle("devkit")
 	menuItem := systray.AddMenuItem("Quit", "Quit Wemeet-Hybrid")
 	go func() {
 		<- menuItem.ClickedCh

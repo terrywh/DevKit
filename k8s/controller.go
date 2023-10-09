@@ -10,7 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/terrywh/dev-kit/util"
+	"github.com/terrywh/devkit/util"
 )
 
 type Controller struct {
@@ -24,7 +24,7 @@ func NewController() *Controller {
 	os.Mkdir(path, 0o755)
 
 	return &Controller{
-		Executable: "/Users/terryhaowu/data/htdocs/github.com/terrywh/dev-kit/bin/kubectl_macos_arm64",
+		Executable: "/Users/terryhaowu/data/htdocs/github.com/terrywh/devkit/bin/kubectl_macos_arm64",
 		ConfigDir: path,
 	}
 }
@@ -119,13 +119,17 @@ func (c *Controller) DescribeCluster(ctx context.Context, req Request) (desc *De
 			if _, ok := object.Get("spec.ports").([]interface{}); !ok {
 				log.Println(object.Get("spec.ports"))
 			}
-
-			desc.Svc = append(desc.Svc, Svc{
+			
+			svc := Svc{
 				Name:      object.GetString("metadata.name"),
 				Type:      object.GetString("spec.type"),
 				ClusterIP: object.GetString("spec.clusterIP"),
-				Port:      c.buildPort(object.Get("spec.ports").([]interface{})),
-			})
+				// Port:      c.buildPort(),
+			}
+			if ports, ok := object.Get("spec.ports").([]interface{}); ok {
+				svc.Port = c.buildPort(ports)
+			}
+			desc.Svc = append(desc.Svc, svc)
 		} else if kind == "Pod" {
 			desc.Pod = append(desc.Pod, Pod{
 				Name:   object.GetString("metadata.name"),

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/terrywh/dev-kit/util"
+	"github.com/terrywh/devkit/util"
 )
 
 // Request ...

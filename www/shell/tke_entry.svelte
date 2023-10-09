@@ -22,6 +22,10 @@
         entryForm.focus();
     }
 
+    function onListSubmit(e) {
+        doConnect();
+    }
+
     function onFormSubmit(e) {
         console.log("form submit: ", e.detail);
     }
@@ -61,7 +65,7 @@
     </div>
     <div class="row mb-2">
         <div class="col-12">
-            <TkeEntryList bind:this={entryList} on:select={onListSelect}></TkeEntryList>
+            <TkeEntryList bind:this={entryList} on:select={onListSelect} on:submit={onListSubmit}></TkeEntryList>
         </div>
     </div>
     

@@ -11,7 +11,7 @@ import (
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/profile"
 	tke "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/tke/v20180525"
-	"github.com/terrywh/dev-kit/util"
+	"github.com/terrywh/devkit/util"
 )
 
 
