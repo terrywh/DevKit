@@ -14,8 +14,6 @@ type BashBackend interface {
 	Start(ctx context.Context) error
 	Resize(rows, cols int)
 	GetSize() (rows, cols int)
-	// Output(cmd string) string
-	// GetArch() string
 }
 
 type BashServe interface {
