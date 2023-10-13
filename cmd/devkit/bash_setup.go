@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -35,10 +36,11 @@ func (s *BashSetup) isthere() bool {
 }
 
 func (s *BashSetup) install() {
-	path := "/Users/terryhaowu/data/htdocs/github.com/terrywh/devkit/bin/trzsz_linux_amd64.tar.gz"
+	arch := "amd64"
+	path := fmt.Sprintf("/Users/terryhaowu/data/htdocs/github.com/terrywh/devkit/bin/trzsz_linux_%s.tar.gz", arch)
 	file, _ := os.Open(path)
 	defer file.Close()
-	io.WriteString(s.server, "base64 -di > /tmp/trzsz_linux_amd64.tar.gz\r")
+	io.WriteString(s.server, fmt.Sprintf("base64 -di > /tmp/trzsz_linux_%s.tar.gz\r", arch))
 	// time.Sleep(time.Second)
 	e := util.NewRfc2045(s.server)
 	io.Copy(e, file)
@@ -47,9 +49,9 @@ func (s *BashSetup) install() {
 	io.WriteString(s.server, "\x04\x04") // Ctrl+D x2
 	time.Sleep(100 * time.Millisecond)
 
-	io.WriteString(s.server, "tar x -C /tmp -f /tmp/trzsz_linux_amd64.tar.gz\r")
-	io.WriteString(s.server, "mv /tmp/trzsz_1.1.5_linux_x86_64 /usr/local/trzsz\r")
-	io.WriteString(s.server, "rm -rf /tmp/trzsz_linux_amd64.tar.gz\r")
+	io.WriteString(s.server, fmt.Sprintf("tar x -C /tmp -f /tmp/trzsz_linux_%s.tar.gz\r", arch))
+	io.WriteString(s.server, fmt.Sprintf("mv /tmp/trzsz_linux_%s /usr/local/trzsz\r", arch))
+	io.WriteString(s.server, fmt.Sprintf("rm -rf /tmp/trzsz_linux_%s.tar.gz\r", arch))
 	io.WriteString(s.server, "ln -s /usr/local/trzsz/trz /usr/bin/trz\r")
 	io.WriteString(s.server, "ln -s /usr/local/trzsz/tsz /usr/bin/tsz\r")
 }

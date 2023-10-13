@@ -19,6 +19,7 @@ func NewController() *Controller {
 }
 
 func (c *Controller) CreateShell(ctx context.Context, req Request) (session *Session, err error) {
+	session = &Session{ Req: req }
 	var sc *ssh.Client
 	var ss *ssh.Session
 
@@ -49,6 +50,7 @@ RECONNECT:
 		sc.Close()
 		return nil, err
 	}
-	return &Session{ Req: req, session: ss }, nil
+	session.session = ss
+	return
 }
 

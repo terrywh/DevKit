@@ -1,3 +1,5 @@
 bin/kubectl_macos_arm64 filter=lfs diff=lfs merge=lfs -text
 bin/trzsz_linux_amd64.tar.gz filter=lfs diff=lfs merge=lfs -text
 bin/trzsz_linux_arm64.tar.gz filter=lfs diff=lfs merge=lfs -text
+bin/kubectl_darwin_arm64 filter=lfs diff=lfs merge=lfs -text
+bin/kubectl_windows_amd64.exe filter=lfs diff=lfs merge=lfs -text

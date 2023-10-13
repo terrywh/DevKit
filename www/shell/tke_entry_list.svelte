@@ -1,5 +1,5 @@
 <script>
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, tick } from "svelte";
     import { route } from "../store.js";
     import { tkeEntry, parseTkeInit } from "./store.js";
 
@@ -24,12 +24,15 @@
 
     $: filterSelect(filter);
 
-    function onSelect(index) {
+    async function onSelect(index) {
         $route.put("entry", index);
+        await tick();
         dispatch("select", {index});
     }
 
-    function onSubmit(index) {
+    async function onSubmit(index) {
+        $route.put("entry", index);
+        await tick();
         dispatch("submit", {index})
     }
 
