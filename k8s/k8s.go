@@ -3,7 +3,7 @@ package k8s
 import (
 	"context"
 	"fmt"
-	"runtime"
+	"regexp"
 
 	"github.com/terrywh/devkit/util"
 )
@@ -58,11 +58,15 @@ func GetKubectlStableVersion(ctx context.Context) (version string) {
 // Kubectl 命令行工具的简单封装
 type Kubectl struct {
 	Path string
+	os   string
+	arch string
 }
 
+var regexKubectl = regexp.MustCompile("kubectl_([^_]+)_([^_\\.]+)")
 // NewKubectl ...
 func NewKubectl(path string) (cmd *Kubectl) {
-	return &Kubectl{ path }
+	matches := regexKubectl.FindStringSubmatch(path)
+	return &Kubectl{ path, matches[1], matches[2]}
 }
 
 // Version ...
@@ -84,7 +88,7 @@ func (cmd *Kubectl) Upgrade(ctx context.Context) (string, error) {
 
 func (cmd *Kubectl) Install(ctx context.Context, version string) (err error) {
 	// https://dl.k8s.io/release/v1.27.3/bin/darwin/arm64/kubectl
-	url := fmt.Sprintf("https://dl.k8s.io/release/%s/bin/%s/%s/kubectl", version, runtime.GOOS, runtime.GOARCH)
+	url := fmt.Sprintf("https://dl.k8s.io/release/%s/bin/%s/%s/kubectl", version, cmd.os, cmd.arch)
 	err = util.HttpDownload(ctx, url, cmd.Path)
 	util.FileAddPerm(cmd.Path, 0o111)
 	return
