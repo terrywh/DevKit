@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 
 	"github.com/terrywh/devkit/util"
 )
@@ -24,7 +25,9 @@ func NewController() *Controller {
 	os.Mkdir(path, 0o755)
 
 	return &Controller{
-		Executable: "/Users/terryhaowu/data/htdocs/github.com/terrywh/devkit/bin/kubectl_macos_arm64",
+		Executable: 
+			fmt.Sprintf("/Users/terryhaowu/data/htdocs/github.com/terrywh/devkit/bin/kubectl_%s_%s",
+				runtime.GOOS, runtime.GOARCH),
 		ConfigDir: path,
 	}
 }

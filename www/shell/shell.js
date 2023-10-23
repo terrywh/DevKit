@@ -115,10 +115,10 @@ async function createTerminal(key) {
             brightWhite: '#e0e0e0'
         },
         cursorStyle: 'bar',
-        fontFamily: "Cascadia Mono",
+        // fontFamily: "Cascadia Mono",
         // fontFamily: "Intel One Mono",
         // fontFamily: "Sarasa Term SC",
-        // fontFamily: "等距更纱黑体 SC",
+        fontFamily: "Noto Sans Mono CJK SC",
         fontSize: 15,
         lineHeight: 1.2,
     });
