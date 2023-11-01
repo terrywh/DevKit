@@ -167,8 +167,8 @@ function createStream(key, term) {
                 "content-type": "application/json",
             },
             body: JSON.stringify({
-                "height": e.rows,
-                "width": e.cols, 
+                "rows": e.rows,
+                "cols": e.cols, 
             })
         });
     });
