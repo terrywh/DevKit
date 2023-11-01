@@ -71,6 +71,7 @@ func (s *BashShell) Serve(ctx context.Context) error {
 		// io.Copy(wsource, s.source)
 		// wsource.Close()
 		io.Copy(s.source, s.server)
+		s.source.Close()
 	} ()
 	wg.Add(1)
 	go func() { // 服务输出 Server -> Filter -> Pipe -> (WebSocket)
@@ -78,6 +79,7 @@ func (s *BashShell) Serve(ctx context.Context) error {
 		// io.Copy(s.source, rserver)
 		// s.source.Close()
 		io.Copy(s.server, s.source)
+		s.server.Close()
 	} ()
 
 	if svc, ok := s.server.(BashServe); ok { // 服务端运行 Shell 工作
