@@ -5,8 +5,6 @@ import (
 	"io"
 	"log"
 	"sync"
-
-	"github.com/trzsz/trzsz-go/trzsz"
 )
 
 type BashBackend interface {
@@ -23,7 +21,7 @@ type BashServe interface {
 type BashShell struct {
 	source io.ReadWriteCloser
 	server BashBackend
-	filter *trzsz.TrzszFilter
+	// filter *trzsz.TrzszFilter
 }
 
 type ResizeRequest interface {
@@ -45,7 +43,7 @@ func (r ResizeRequestImpl) Cols() int {
 }
 
 func (s *BashShell) Resize(rows, cols int) {
-	s.filter.SetTerminalColumns(int32(cols))
+	// s.filter.SetTerminalColumns(int32(cols))
 	s.server.Resize(rows, cols)
 }
 
@@ -58,25 +56,28 @@ func (s *BashShell) Serve(ctx context.Context) error {
 		log.Println("failed to start (server): ", err)
 	}
 	defer s.server.Close()
+	// !!! 使用 JS 在浏览器进行对应支持，不再使用服务端 Filter 机制
 	// 在 Shell 中支持 trzsz 上传下载
-	rsource, wsource := io.Pipe()
-	rserver, wserver := io.Pipe()
-	_, cols := s.server.GetSize()
-	s.filter = trzsz.NewTrzszFilter(rsource, wserver, s.server, s.server, trzsz.TrzszOptions{
-		TerminalColumns: int32(cols),
-	})
+	// rsource, wsource := io.Pipe()
+	// rserver, wserver := io.Pipe()
+	// _, cols := s.server.GetSize()
+	// s.filter = trzsz.NewTrzszFilter(rsource, wserver, s.server, s.server, trzsz.TrzszOptions{
+	// 	TerminalColumns: int32(cols),
+	// })
 
 	wg.Add(1)
 	go func() { // 用户输入 (WebSocket) -> Pipe -> Filter -> Server
 		defer wg.Done()
-		io.Copy(wsource, s.source)
-		wsource.Close()
+		// io.Copy(wsource, s.source)
+		// wsource.Close()
+		io.Copy(s.source, s.server)
 	} ()
 	wg.Add(1)
 	go func() { // 服务输出 Server -> Filter -> Pipe -> (WebSocket)
 		defer wg.Done()
-		io.Copy(s.source, rserver)
-		s.source.Close()
+		// io.Copy(s.source, rserver)
+		// s.source.Close()
+		io.Copy(s.server, s.source)
 	} ()
 
 	if svc, ok := s.server.(BashServe); ok { // 服务端运行 Shell 工作

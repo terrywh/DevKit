@@ -3,6 +3,7 @@
 // import "/node_modules/xterm-addon-fit/lib/xterm-addon-fit.js";
 import { sshEntry, tkeEntry, parseTkeInit } from "./store.js";
 import { Terminal } from "xterm";
+import { TrzszAddon } from "trzsz";
 import { WebglAddon } from "xterm-addon-webgl";
 import { FitAddon } from "xterm-addon-fit";
 import ShellFloat from "./shell_float.svelte";
@@ -123,7 +124,7 @@ async function createTerminal(key) {
         lineHeight: 1.2,
     });
     term.open(document.getElementById('terminal'));
-    const fitAddon = new FitAddon()
+    const fitAddon = new FitAddon();
     term.loadAddon(fitAddon);
     term.loadAddon(new WebglAddon());
     term.focus();
@@ -135,7 +136,7 @@ async function createTerminal(key) {
             fitAddon.fit();
             console.log("terminal fit: ", term.rows, "x", term.cols);
             if (cb instanceof Function) cb(term);
-        }, 400);
+        }, 500);
     };
     window.term = term;
     return new Promise((resolve) => { term.fit(resolve) });
@@ -144,19 +145,21 @@ async function createTerminal(key) {
 function createStream(key, term) {
     const stream = new WebSocket(`ws://127.0.0.1:8080/bash/stream?key=${key}`);
     stream.binaryType = "arraybuffer";
-    stream.addEventListener("open", function(e) {
-        console.log("stream open");
-    })
-    stream.addEventListener("message", function(e) {
-        term.write(new Uint8Array(e.data));
-    })
-    stream.addEventListener("close", function(e) {
-        console.log("stream close");
-        term.write(`\r\n\u001b[0;31m${e.toString()}\u001b[0m\r\n`);
-    })
-    term.onData(function(data) {
-        stream.send(data);
-    });
+    // 由 TrzszAddon 接管 stream 与 Terminal 间数据交换
+    // stream.addEventListener("open", function(e) {
+    //     console.log("stream open");
+    // })
+    // stream.addEventListener("message", function(e) {
+    //     term.write(new Uint8Array(e.data));
+    // })
+    // stream.addEventListener("close", function(e) {
+    //     console.log("stream close");
+    //     term.write(`\r\n\u001b[0;31m${e.toString()}\u001b[0m\r\n`);
+    // })
+    // term.onData(function(data) {
+    //     stream.send(data);
+    // });
+    term.loadAddon(new TrzszAddon(stream));
     term.onResize(async function(e) {
         const rsp = await fetch(`/bash/resize?key=${key}`, {
             method: "POST",
