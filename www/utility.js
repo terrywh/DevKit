@@ -18,8 +18,8 @@ export async function hash() {
 }
 
 export function equal(o1, o2) {
-    const keys1 = Object.keys(o1);
-    const keys2 = Object.keys(o2);
+    const keys1 = Object.keys(o1 || {});
+    const keys2 = Object.keys(o2 || {});
 
     if (keys1.length !== keys2.length) {
         return false;

@@ -5,7 +5,6 @@
     import TkeEntryForm from "./tke_entry_form.svelte";
     import TkeEntryJump from "./tke_entry_jump.svelte";
     import TkeEntryList from "./tke_entry_list.svelte";
-    import K8sEntryForm from "./k8s_entry_form.svelte";
 
     let connect, connectWindowTarget, entryList, entryForm;
 
