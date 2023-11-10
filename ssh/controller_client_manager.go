@@ -77,6 +77,9 @@ func (c *controllerClientManager) prepareClient(req Request) (cli *ssh.Client, e
 }
 
 func (c *controllerClientManager) prepareAuth(pass string) (auth []ssh.AuthMethod) {
+	if method, err := c.makePublicKeyAuth(); err == nil {
+		auth = append(auth, method)
+	}
 	if len(pass) > 0 {
 		// 密码认证
 		auth = append(auth, ssh.Password(pass))
@@ -88,21 +91,24 @@ func (c *controllerClientManager) prepareAuth(pass string) (auth []ssh.AuthMetho
 			return []string { pass }, nil
 		}))
 	}
+	return
+}
+
+func (c *controllerClientManager) makePublicKeyAuth() (ssh.AuthMethod, error) {
 	// 公钥认证
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return
+		return nil, err
 	}
 	pkey, err := os.ReadFile(filepath.Join(home, ".ssh", "id_rsa"))
 	if err != nil {
-		return
+		return nil, err
 	}
 	signer, err := ssh.ParsePrivateKey(pkey)
 	if err != nil {
-		return
+		return nil, err
 	}
-	auth = append(auth, ssh.PublicKeys(signer))
-	return
+	return ssh.PublicKeys(signer), nil
 }
 
 func (c *controllerClientManager) FetchClient(req Request) (client *ssh.Client, err error) {
