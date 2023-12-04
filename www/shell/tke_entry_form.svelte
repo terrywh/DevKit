@@ -22,10 +22,8 @@
     }
 
     function onSubmit() {
-        const index = $route.get("entry", 0);
-        const confirm = equal(entry, $tkeEntry.fetch(index));
-        dispatch("submit", {entry, confirm});
-        $tkeEntry.append(index, entry);
+        // const confirm = equal(entry, $tkeEntry.fetch(index));
+        dispatch("submit", entry);
     }
 
     let inputInit;

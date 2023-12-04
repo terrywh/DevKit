@@ -1,6 +1,7 @@
 <script>
     import { tick } from "svelte";
     import { route } from "../store.js";
+    import { tkeEntry } from "./store.js";
     import SshEntryFilter from "./ssh_entry_filter.svelte";
     import TkeEntryForm from "./tke_entry_form.svelte";
     import TkeEntryJump from "./tke_entry_jump.svelte";
@@ -27,6 +28,8 @@
 
     function onFormSubmit(e) {
         console.log("form submit: ", e.detail);
+        const index = $tkeEntry.append($route.get("entry", 0), e.detail);
+        $route.put("entry", index);
     }
 
     async function onFilterSubmit(e) {
