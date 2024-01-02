@@ -36,7 +36,7 @@ func TestSSH(t *testing.T) {
 	}
 
 	// Connect to the remote server and perform the SSH handshake.
-	client, err := ssh.Dial("tcp", "9.135.6.133:22", config)
+	client, err := ssh.Dial("tcp", "127.0.0.1:22", config)
 	if err != nil {
 		log.Fatalf("unable to connect: %v", err)
 	}
