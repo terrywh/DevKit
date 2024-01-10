@@ -43,7 +43,7 @@ async function rcopy(src, dst, filter) {
 
 await rcopy("./www", "./public", (file) => {
     const ext = extname(file.name);
-    return file.isFile() && [".css", ".html"].indexOf(ext) > -1;
+    return file.isFile() && [".css", ".html", ".png"].indexOf(ext) > -1;
 });
 
 const r = await build([

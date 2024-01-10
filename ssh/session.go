@@ -61,19 +61,19 @@ func (s *Session) Serve(ctx context.Context) (err error) {
 		ch <- s.session.Wait()
 	} ()
 
-	go func(ctx context.Context) { // 此协程用于保活，不参与结束流程等待
-		timer := time.NewTicker(25 * time.Second)
-		defer timer.Stop()
-	SERVING:
-		for {
-			select {
-			case <- ctx.Done():
-				break SERVING
-			case <- timer.C:
-				s.session.SendRequest("keepalive", false, nil)
-			}
-		}
-	} (ctx)
+	// go func(ctx context.Context) { // 此协程用于保活，不参与结束流程等待
+	// 	timer := time.NewTicker(25 * time.Second)
+	// 	defer timer.Stop()
+	// SERVING:
+	// 	for {
+	// 		select {
+	// 		case <- ctx.Done():
+	// 			break SERVING
+	// 		case <- timer.C:
+	// 			s.session.SendRequest("keepalive", false, nil)
+	// 		}
+	// 	}
+	// } (ctx)
 	
 	if s.Req.Command != "" {
 		time.Sleep(500 * time.Millisecond)

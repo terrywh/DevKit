@@ -139,16 +139,19 @@ async function createTerminal(key) {
         }, 500);
     };
     window.term = term;
-    return new Promise((resolve) => { term.fit(resolve) });
+    // return new Promise((resolve) => { term.fit(resolve) });
+    return term;
 }
 
 function createStream(key, term) {
     const stream = new WebSocket(`ws://127.0.0.1:8080/bash/stream?key=${key}`);
     stream.binaryType = "arraybuffer";
     // 由 TrzszAddon 接管 stream 与 Terminal 间数据交换
-    // stream.addEventListener("open", function(e) {
-    //     console.log("stream open");
-    // })
+    const promise = new Promise((resolve) => {
+        stream.addEventListener("open", function(e) {
+            resolve(stream);
+        });
+    });
     // stream.addEventListener("message", function(e) {
     //     term.write(new Uint8Array(e.data));
     // })
@@ -172,7 +175,41 @@ function createStream(key, term) {
             })
         });
     });
-    return stream;
+    return promise;
+}
+
+function createKeeper(stream, term, float) {
+    let timeout, enable = false;
+    const ping = function() {
+        console.log("keepalive with: \\0");
+        if (enable) {
+            stream.send('\0');
+            timeout = setTimeout(ping, 30000);
+        }
+    };
+    term.onTitleChange(function() {
+        enable = false
+        clearTimeout(timeout);
+    });
+
+    float.$on("refresh", function(e) {
+        if (e.detail.enable) {
+            enable = true;
+            ping();
+        } else {
+            enable = false;
+        }
+    })
+    // term.onData(function() {
+    //     console.log("canceld with: data", new Date());
+    //     clearTimeout(timeout);
+    //     timeout = setTimeout(ping, 30000);
+    // });
+    // term.onWriteParsed(function() {
+    //     console.log("canceld with: write", new Date());
+    //     clearTimeout(timeout);
+    //     timeout = setTimeout(ping, 30000);
+    // })
 }
 
 function createFloat(key) {
@@ -185,7 +222,7 @@ function createFloat(key) {
     });
     float.$on("font-family", function(e) {
         term.options.fontFamily = e.detail["font-family"];
-        term.fit()
+        term.fit();
     });
     return float;
 }
@@ -200,8 +237,10 @@ function createFloat(key) {
         term.write(e.toString());
         return;
     }
-    await createFloat(key, term);
-    await createStream(key, term);
+    const float = await createFloat(key, term);
+    const stream = await createStream(key, term);
+    createKeeper(stream, term, float);
+
     window.addEventListener("resize", term.fit);
     setTimeout(term.fit, 3000);
 })();
