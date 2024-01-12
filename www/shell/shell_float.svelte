@@ -2,7 +2,8 @@
     import { createEventDispatcher } from "svelte";
 
     export let key = "";
-    let configuring = 0, copying = 0, refreshing = false;
+    let configuring = 0, copying = 0;
+    export let refreshing = false;
 
     const dispatch = createEventDispatcher();
 
@@ -34,6 +35,7 @@
     }
 
     function onRefreshing(s) {
+        console.log("onRefreshing: ", s);
         dispatch("refresh", {enable: s});
     }
 

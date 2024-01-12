@@ -179,9 +179,14 @@ function createStream(key, term) {
 }
 
 function createKeeper(stream, term, float) {
+    window.onblur = function() {
+        float.$$set({"refreshing": true});
+    }
+    window.onfocus = function() {
+        float.$$set({"refreshing": false});
+    }
     let timeout, enable = false;
     const ping = function() {
-        console.log("keepalive with: \\0");
         if (enable) {
             stream.send('\0');
             timeout = setTimeout(ping, 30000);
@@ -195,11 +200,11 @@ function createKeeper(stream, term, float) {
     float.$on("refresh", function(e) {
         if (e.detail.enable) {
             enable = true;
-            ping();
+            setTimeout(ping, 25000);
         } else {
             enable = false;
         }
-    })
+    });
     // term.onData(function() {
     //     console.log("canceld with: data", new Date());
     //     clearTimeout(timeout);
