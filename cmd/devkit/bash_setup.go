@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -16,27 +15,19 @@ type BashSetup struct {
 	server BashBackend
 }
 
-func (s *BashSetup) Serve(ctx context.Context) (err error) {
+func (s *BashSetup) Serve(ctx context.Context, arch string) (err error) {
 	log.Println("<bash-setup> preparing ...")
 	time.Sleep(2 * time.Second)
 	log.Println("<bash-setup> installing ...")
-	s.install()
+	// name := "trzsz_1.1.7_linux_x86_64"
+	// name := "trzsz_1.1.7_linux_aarch64"
+	s.install(fmt.Sprintf("trzsz_1.1.7_linux_%s", arch))
 	log.Println("<bash-setup> done.")
 	return
 }
 
-func (s *BashSetup) isthere() bool {
-	io.WriteString(s.server, "ls -l /usr/local/trzsz/trz &> /dev/null; echo 'wemeet-hybrid-bash-setup:' $?\r")
-	time.Sleep(200 * time.Millisecond)
-	buffer := make([]byte, 1024)
-	for !bytes.Contains(buffer, []byte("wemeet-hybrid-bash-setup: ")) {
-		s.server.Read(buffer)
-	}
-	return !bytes.Contains(buffer, []byte("wemeet-hybrid-bash-setup: 2")) // No such file or directory
-}
-
-func (s *BashSetup) install() {
-	name := "trzsz_1.1.7_linux_x86_64"
+func (s *BashSetup) install(name string) {
+	
 
 	path := fmt.Sprintf("/Users/terryhaowu/data/htdocs/github.com/terrywh/devkit/var/%s.tar.gz", name)
 	file, _ := os.Open(path)

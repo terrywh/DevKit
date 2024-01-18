@@ -108,6 +108,6 @@ func (svr *BashServer) handleConfig(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	setup := &BashSetup{ shell }
-	setup.Serve(context.Background())
+	setup.Serve(context.Background(), r.URL.Query().Get("arch"))
 	fmt.Fprintf(w, `{"r":%d}`, time.Now().Unix())
 }

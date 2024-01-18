@@ -7,10 +7,10 @@
 
     const dispatch = createEventDispatcher();
 
-    async function onConfig(e) {
+    async function onConfig(e, arch) {
         const form = new URLSearchParams(location.search);
         configuring = 1;    
-        fetch("/bash/config?key=" + key).then(() => {
+        fetch("/bash/config?key=" + key + "&arch=" + arch).then(() => {
             configuring = 2
         }, () => {
             configuring = 3;
@@ -45,13 +45,26 @@
 
 <div class="opacity-25" role="toolbar" tabindex="-1" on:mouseenter={onEnter} on:mouseleave={onLeave} >
     <div class="btn-group float-start">
-        <button type="button" class="btn btn-secondary" on:click={onConfig} title="安装文件工具">
+        <button type="button" class="btn btn-secondary" on:click={(e) => { onConfig(e, "x86_64") }} title="x86_64">
             {#if configuring == 1}
             <div class="spinner-border" style="height: 1rem; width: 1rem;" role="status"></div>
-            {:else if configuring == 2}
-            <i class="bi bi-cloud-upload-fill"></i>
+            <!-- {:else if configuring == 2}
+            <i class="bi bi-cloud-upload"></i>
+            X86 -->
             {:else}
             <i class="bi bi-cloud-upload"></i>
+            X86
+            {/if}
+        </button>
+        <button type="button" class="btn btn-secondary" on:click={(e) => { onConfig(e, "aarch64") }} title="aarch64">
+            {#if configuring == 1}
+            <div class="spinner-border" style="height: 1rem; width: 1rem;" role="status"></div>
+            <!-- {:else if configuring == 2}
+            <i class="bi bi-cloud-upload"></i>
+            X86 -->
+            {:else}
+            <i class="bi bi-cloud-upload"></i>
+            ARM
             {/if}
         </button>
         <button type="button" class="btn btn-secondary" on:click={onCopy} title="复制标题">
