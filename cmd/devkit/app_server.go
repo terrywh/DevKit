@@ -34,7 +34,7 @@ func (api *AppServer) onReady() {
 	log.Println("onReady, start server (", api.root, ") :8080 ...")
 	go http.ListenAndServe(":8080", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		staticMOD := http.FileServer(http.Dir(filepath.Join(api.root, "node_modules")))
-		staticWWW := http.FileServer(http.Dir(filepath.Join(api.root, "public")))
+		staticWWW := FileServer{ Root: filepath.Join(api.root, "public"), Mime: map[string]string{ ".svelte": "text/javascript"} }
 	
 		var found bool
 		if handler, pattern := api.server.Handler(r); pattern != "" {
