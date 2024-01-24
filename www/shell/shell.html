@@ -1,22 +1,27 @@
 <!doctype html>
-    <html style="width: 100%; height: 100%">
-        <head>
-            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
-                integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM"
-                crossorigin="anonymous">
-            <link href="https://cdn.jsdelivr.net/npm/xterm/css/xterm.css" rel="stylesheet">
-            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-            <link rel="icon" type="image/png" href="/shell/shell.png" />
-            <!-- <style>
-@font-face {
+<html style="width: 100%; height: 100%">
+    <head>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
+            integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM"
+            crossorigin="anonymous">
+        <link href="https://cdn.jsdelivr.net/npm/xterm/css/xterm.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+        <link rel="icon" type="image/png" href="/shell/shell.png" />
+        <!-- <style>
+    @font-face {
     font-family: "IntelOne Mono";
     src: url("https://cdn.jsdelivr.net/gh/intel/intel-one-mono@main/fonts/otf/intelone-mono-font-family-regular.otf");
-}
-            </style> -->
-        </head>
-        <body style="width: 100%; height: 100%; background-color: #161719;">
-            <div id="terminal" style="width: 100%; height: 100%;"></div>
-            <div id="float" style="position: fixed; top: 2rem; right: 4rem; z-index: 100;"></div>
-            <script type="module" src="/shell/shell.js"></script>
+    }
+        </style> -->
+    </head>
+    <body style="width: 100%; height: 100%; background-color: #161719;">
+        <script type="module">
+            import { createRoot } from "svelte";
+            import Shell from "./shell.svelte";
+
+            const app = createRoot(Shell, {
+                target: document.body,
+            });
+        </script>
     </body>
 </html>

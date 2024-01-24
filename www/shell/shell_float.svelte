@@ -1,11 +1,6 @@
 <script>
-    import { createEventDispatcher } from "svelte";
-
-    export let key = "";
+    let { key = "", refreshing = false } = $props();
     let configuring = 0, copying = 0;
-    export let refreshing = false;
-
-    const dispatch = createEventDispatcher();
 
     async function onConfig(e, arch) {
         const form = new URLSearchParams(location.search);
@@ -34,13 +29,12 @@
         e.target.classList.add("opacity-25")
     }
 
-    function onRefreshing(s) {
-        console.log("onRefreshing: ", s);
-        dispatch("refresh", {enable: s});
-    }
-
-    $: onRefreshing(refreshing);
-
+    window.addEventListener("blur", function() {
+        refreshing = true;
+    });
+    window.addEventListener("focus", function() {
+        refreshing = false;
+    });
 </script>
 
 <div class="opacity-25" role="toolbar" tabindex="-1" on:mouseenter={onEnter} on:mouseleave={onLeave} >

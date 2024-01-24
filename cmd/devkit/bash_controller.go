@@ -42,8 +42,6 @@ var ErrShellNotExists error = errors.New("shell does not exist")
 
 func (bc *BashController) FetchShell(ctx context.Context, r *http.Request) (bash BashBackend, err error) {
 	key := r.URL.Query().Get("key")
-	log.Println("fetch shell: ", key)
-	
 	if bash, err = bc.fetch(ctx, key); err == nil {
 		return
 	}
@@ -60,7 +58,9 @@ func (bc *BashController) FetchShell(ctx context.Context, r *http.Request) (bash
 
 func UnmarshalTo(q url.Values, r io.Reader, d interface{}) (err error) {
 	decoder := json.NewDecoder(r)
-	err = decoder.Decode(d)
+	if err = decoder.Decode(d); err != nil {
+		return
+	}
 	v := reflect.ValueOf(d)
 
 	rows, _ := strconv.Atoi(q.Get("rows"))
@@ -84,11 +84,19 @@ func (bc *BashController) create(ctx context.Context, r *http.Request) (bash Bas
 	switch shell {
 	case "ssh":
 		var req ssh.Request
-		UnmarshalTo(query, r.Body, &req)
+		if err = UnmarshalTo(query, r.Body, &req); err != nil {
+			log.Println("failed to parse shell create: ", err, req)
+			return
+		}
+		log.Println("create ssh shell: ", req)
 		bash, err = defaultSSHController.CreateShell(ctx, req)
 	case "k8s":
 		var req k8s.Request
-		UnmarshalTo(query, r.Body, &req)
+		if err = UnmarshalTo(query, r.Body, &req); err != nil {
+			log.Println("failed to parse shell create: ", err, req)
+			return
+		}
+		log.Println("create k8s shell: ", req)
 		bash, err = defaultK8SController.CreateShell(ctx, req)
 	default:
 		bash = nil

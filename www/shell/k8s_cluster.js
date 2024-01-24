@@ -1,6 +1,7 @@
+import { createRoot } from "svelte";
 import K8SCluster from "./k8s_cluster.svelte"
 
-const app = new K8SCluster({
+const app = createRoot(K8SCluster, {
     target: document.body,
 });
 

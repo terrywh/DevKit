@@ -5,7 +5,7 @@
 
     const dispatch = createEventDispatcher();
     // const dispatch = console.log.bind(console);
-    export let filter = "";
+    let { filter = "" } = $props();
 
     function onSelect(index, e) {
         if (!$sshEntry.store[index]) return;
@@ -33,7 +33,9 @@
         }
     }
 
-    $: filterSelect(filter);
+    $effect(() => {
+        filterSelect(filter);
+    });
 
     function onSubmit(index) {
         dispatch("submit", {index});

@@ -36,8 +36,8 @@
 </script>
 
 <table class="table">
-    <thead><th>编辑</th></thead>
-    <tbody><td>
+    <thead><tr><th>编辑</th></tr></thead>
+    <tbody><tr><td>
         <form on:submit|preventDefault={onSubmit}>
             <div class="row mb-2">
                 <lable class="col-md-3 col-form-label">Host:</lable>
@@ -72,9 +72,9 @@
             <div class="row mb-2">
                 <div class="offset-md-3 col-md-9">
                     <button type="button" disabled={equal(ssh, old)} on:click={onSave} class="btn btn-secondary"><i class="bi bi-check2-square"></i> 保存</button>
-                    <button type="submit" on:click={onSubmit} class="d-none btn btn-primary"><i class="bi bi-terminal"></i> 连接</button>
+                    <button type="submit" on:click={onSubmit} class="btn btn-primary"><i class="bi bi-terminal"></i> 连接</button>
                 </div>
             </div>
         </form>
-    </td></tbody>
+    </td></tr></tbody>
 </table>

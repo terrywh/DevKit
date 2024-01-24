@@ -8,7 +8,7 @@
     import EntryList from "./ssh_entry_list.svelte";
     import EntryFilter from "./ssh_entry_filter.svelte";
     
-    let entryForm, entryList, routePath = [];
+    let entryForm, entryList, entryFilter = "", routePath = [];
 
     function onListSubmit(e) {
         // connect.submit()
@@ -65,12 +65,12 @@
     </div>
     <div class="row mb-3">
         <div class="col-12">
-            <EntryFilter on:submit={onFilterSubmit}></EntryFilter>
+            <EntryFilter bind:filter={entryFilter}></EntryFilter>
         </div>
     </div>
     <div class="row mb-2">
         <div class="col-9">
-            <EntryList bind:this={entryList} on:submit={onListSubmit} on:select={onListSelect}></EntryList>
+            <EntryList bind:this={entryList} bind:filter={entryFilter} on:submit={onListSubmit} on:select={onListSelect}></EntryList>
         </div>
         <div class="col-3">
             <EntryForm bind:this={entryForm} on:submit={onFormSubmit} on:save={onFormSave}></EntryForm>

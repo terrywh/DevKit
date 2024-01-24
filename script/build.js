@@ -1,5 +1,6 @@
 // import { compile } from "https://esm.sh/svelte@4.2.9/compiler";
-import { compile } from "npm:svelte/compiler";
+// import { compile } from "npm:svelte/compiler";
+import { compile } from "npm:svelte@5.0.0-next.37/compiler";
 import { join, extname } from "https://deno.land/std@0.212.0/path/mod.ts";
 
 
@@ -15,11 +16,12 @@ async function map() {
     const map = {imports: {}};
     for (const entry in desc.exports) {
         const value = desc.exports[entry];
-        const file = value.browser ? value.browser.default : value.default;
+        const file = value.browser ? (value.browser.default || value.browser) : value.default;
         if (entry.at(0) == '.' && file) {
             map.imports[`svelte${entry.substring(1)}`] = `/node_modules/svelte${file.substring(1)}`;
         }
     }
+    map.imports["esm-env"] = "/node_modules/esm-env/prod-browser.js";
     // map.imports["xterm"] = "/node_modules/xterm/lib/xterm.js";
     // map.imports["xterm-addon-webgl"] = "/node_modules/xterm-addon-webgl/lib/xterm-addon-webgl.js";
     // map.imports["xterm-addon-fit"] = "/node_modules/xterm-addon-fit/lib/xterm-addon-fit.js";
@@ -27,19 +29,18 @@ async function map() {
     return map;
 }
 
-async function run(src, dst, map) {
+async function build(src, dst, map) {
     for await (const entry of Deno.readDir(src)) {
         const source = join(src, entry.name);
         const target = join(dst, entry.name);
         if (entry.isDirectory) {
             await Deno.mkdir(target, {recursive: true});
-            await run(source, target, map);
-        } else if (".svelte" === extname(entry.name)) {
+            await build(source, target, map);
+        } else if (entry.name.endsWith(".svelte") || entry.name.endsWith(".svelte.js")) {
             const file = await Deno.readFile(source);
-            const m = compile(new TextDecoder().decode(file), {dev: true});
+            const m = compile(new TextDecoder().decode(file), {dev: true, css: "injected"});
             await Deno.writeTextFile(target, m.js.code);
         } else if (".html" === extname(entry.name)) {
-            console.log(source, target);
             const fs = await Deno.open(source, {"read": true});
             const ft = await Deno.open(target, {"create": true, "write": true, "truncate": true});
             const w = await ft.writable.getWriter();
@@ -55,5 +56,6 @@ async function run(src, dst, map) {
     }
 }
 
-run("./www", "./public",
+await build("./www", "./public",
     new TextEncoder().encode(`<!DOCTYPE html><script type="importmap">${JSON.stringify(await map())}</script>\n`));
+console.log("done.");

@@ -3,6 +3,7 @@ package ssh
 import (
 	"context"
 	"fmt"
+	"log"
 	"net"
 	"os"
 	"path/filepath"
@@ -65,6 +66,7 @@ func (c *controllerClientManager) prepareClient(req Request) (cli *ssh.Client, e
 		if err != nil {
 			break
 		}
+		log.Println("create client: ", cconn, cchan, creqs)
 		cli = ssh.NewClient(cconn, cchan, creqs)
 		clients = append(clients, cli)
 	}

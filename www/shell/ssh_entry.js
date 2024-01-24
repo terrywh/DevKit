@@ -1,6 +1,7 @@
+import { createRoot } from "svelte";
 import SshEntry from "./ssh_entry.svelte"
 
-const app = new SshEntry({
+const app = createRoot(SshEntry, {
     target: document.body,
 });
 

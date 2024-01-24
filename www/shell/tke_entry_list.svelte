@@ -42,7 +42,7 @@
 
 </script>
 <table class="table">
-    <thead>
+    <thead><tr>
         <th>#</th>
         <th>DESC</th>
         <th>CLUSTER</th>
@@ -50,7 +50,7 @@
         <th>POD</th>
         <th>CONTAINER</th>
         <th></th>
-    </thead>
+    </tr></thead>
     <tbody>
         {#each $tkeEntry.store as e, i}
         {#if filterApply(e, filter)}
