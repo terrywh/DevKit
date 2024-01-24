@@ -1,5 +1,6 @@
+// import { compile } from "https://esm.sh/svelte@4.2.9/compiler";
 import { compile } from "npm:svelte/compiler";
-import { join, extname } from "https://deno.land/std@0.212.0/path/mod.ts"
+import { join, extname } from "https://deno.land/std@0.212.0/path/mod.ts";
 
 
 async function map() {
@@ -19,6 +20,10 @@ async function map() {
             map.imports[`svelte${entry.substring(1)}`] = `/node_modules/svelte${file.substring(1)}`;
         }
     }
+    // map.imports["xterm"] = "/node_modules/xterm/lib/xterm.js";
+    // map.imports["xterm-addon-webgl"] = "/node_modules/xterm-addon-webgl/lib/xterm-addon-webgl.js";
+    // map.imports["xterm-addon-fit"] = "/node_modules/xterm-addon-fit/lib/xterm-addon-fit.js";
+    // map.imports["trzsz"] = "/node_modules/trzsz/lib/trzsz.mjs";
     return map;
 }
 

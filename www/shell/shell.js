@@ -2,13 +2,13 @@
 // import "/node_modules/xterm-addon-webgl/lib/xterm-addon-webgl.js";
 // import "/node_modules/xterm-addon-fit/lib/xterm-addon-fit.js";
 import { sshEntry, tkeEntry, parseTkeInit } from "./store.js";
-import { Terminal } from "xterm";
-import { TrzszAddon } from "trzsz";
-import { WebglAddon } from "xterm-addon-webgl";
-import { FitAddon } from "xterm-addon-fit";
+import { Terminal } from "https://esm.sh/xterm@5.3.0";
+import { TrzszAddon } from "/node_modules/trzsz/lib/trzsz.mjs";
+// import { TrzszAddon } from "https://esm.sh/trzsz"; // 内部存在不支持的模块
+import { WebglAddon } from "https://esm.sh/xterm-addon-webgl@0.16.0";
+import { FitAddon } from "https://esm.sh/xterm-addon-fit@0.8.0";
 import ShellFloat from "./shell_float.svelte";
 import { hash } from "../utility.js";
-import { type } from "os";
 
 const query = new URLSearchParams(location.search);
 const route = query.getAll("route");
@@ -85,7 +85,7 @@ async function createShell(term, body) {
 
 async function createTerminal(key) {
     let fitting = false;
-    const term = new Terminal({
+    const term = new (Terminal.Terminal || Terminal)({
         theme: {
             foreground: '#c5c8c6',
             background: '#161719',
@@ -124,9 +124,9 @@ async function createTerminal(key) {
         lineHeight: 1.2,
     });
     term.open(document.getElementById('terminal'));
-    const fitAddon = new FitAddon();
+    const fitAddon = new (FitAddon.FitAddon || FitAddon)();
     term.loadAddon(fitAddon);
-    term.loadAddon(new WebglAddon());
+    term.loadAddon(new (WebglAddon.WebglAddon || WebglAddon)());
     term.focus();
  
     let timeout;

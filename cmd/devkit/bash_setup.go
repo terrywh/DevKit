@@ -17,8 +17,9 @@ type BashSetup struct {
 
 func (s *BashSetup) Serve(ctx context.Context, arch string) (err error) {
 	log.Println("<bash-setup> preparing ...")
-	time.Sleep(2 * time.Second)
+	time.Sleep(1 * time.Second)
 	log.Println("<bash-setup> installing ...")
+	time.Sleep(1 * time.Second)
 	// name := "trzsz_1.1.7_linux_x86_64"
 	// name := "trzsz_1.1.7_linux_aarch64"
 	s.install(fmt.Sprintf("trzsz_1.1.7_linux_%s", arch))
@@ -27,8 +28,6 @@ func (s *BashSetup) Serve(ctx context.Context, arch string) (err error) {
 }
 
 func (s *BashSetup) install(name string) {
-	
-
 	path := fmt.Sprintf("/Users/terryhaowu/data/htdocs/github.com/terrywh/devkit/var/%s.tar.gz", name)
 	file, _ := os.Open(path)
 	defer file.Close()
