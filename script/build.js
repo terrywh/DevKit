@@ -1,6 +1,6 @@
 // import { compile } from "https://esm.sh/svelte@4.2.9/compiler";
 // import { compile } from "npm:svelte/compiler";
-import { compile } from "npm:svelte@5.0.0-next.37/compiler";
+import { compile } from "npm:svelte@5.0.0-next.41/compiler";
 import { join, extname } from "https://deno.land/std@0.212.0/path/mod.ts";
 
 
@@ -38,7 +38,10 @@ async function build(src, dst, map) {
             await build(source, target, map);
         } else if (entry.name.endsWith(".svelte") || entry.name.endsWith(".svelte.js")) {
             const file = await Deno.readFile(source);
-            const m = compile(new TextDecoder().decode(file), {dev: true, css: "injected"});
+            const m = compile(new TextDecoder().decode(file), {
+                dev: true,
+                css: "injected",
+            });
             await Deno.writeTextFile(target, m.js.code);
         } else if (".html" === extname(entry.name)) {
             const fs = await Deno.open(source, {"read": true});

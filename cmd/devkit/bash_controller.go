@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"reflect"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/terrywh/devkit/k8s"
@@ -20,6 +21,7 @@ import (
 )
 
 type BashController struct {
+	mutex sync.Mutex
 	cache map[string]BashCache
 }
 
@@ -29,6 +31,7 @@ type BashCache struct {
 
 func NewBashController() *BashController {
 	return &BashController{
+		mutex: sync.Mutex{},
 		cache: make(map[string]BashCache),
 	}
 }
@@ -113,13 +116,19 @@ func (bc *BashController) key(form url.Values) string {
 }
 
 func (bc *BashController) fetch(ctx context.Context, key string) (BashBackend, error) {
+	bc.mutex.Lock()
+	defer bc.mutex.Unlock()
+
 	if cache, ok := bc.cache[key]; ok {
 		return cache.Bash, nil
 	}
-	return nil, ErrShellNotExists                                                                             
+	return nil, ErrShellNotExists
 }
 
 func (bc *BashController) store(ctx context.Context, key string, bash BashBackend) (err error) {
-	bc.cache[key] = BashCache{ bash }
+	bc.mutex.Lock()
+	defer bc.mutex.Unlock()
+
+	bc.cache[key] = BashCache{bash}
 	return
 }

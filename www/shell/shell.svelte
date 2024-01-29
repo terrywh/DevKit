@@ -164,5 +164,5 @@ onMount(async function() {
     <ShellTerminal bind:this={cTerminal} bind:refreshing={cTerminalRefreshing} key={key} />
 </div>
 <div style="position: fixed; top: 2rem; right: 4rem; z-index: 100;">
-    <ShellFloat bind:refreshing={cTerminalRefreshing} />
+    <ShellFloat bind:refreshing={cTerminalRefreshing} key={key} />
 </div>
