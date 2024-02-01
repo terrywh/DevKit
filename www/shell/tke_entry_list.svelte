@@ -57,7 +57,7 @@
         {#each $tkeEntry.store as e, i}
         {#if filterApply(e, filter)}
         {@const entry = parseTkeInit(e.init)}
-        <tr on:click={() => onSelect(i)} class:table-active={i == $route.get("entry")}>
+        <tr on:click={() => onSelect(i)} class:table-primary={i == $route.get("entry")}>
             <td>{i}</td>
             <td>{e.desc}</td>
             <td>{entry.cluster}</td>

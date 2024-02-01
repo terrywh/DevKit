@@ -56,7 +56,7 @@
     <tbody>
     {#each $sshEntry.store as e, i}
         {#if filterApply(e, filter)}
-        <tr class:table-active={$route.get("entry", 0) == i} on:click={() => onSelect(i, true)}>
+        <tr class:table-primary={$route.get("entry", 0) == i} on:click={() => onSelect(i, true)}>
             <td>{i}</td>
             <td>{e.desc || "-"}</td>
             <td>{e.host || "-"}</td>

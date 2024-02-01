@@ -1,6 +1,6 @@
 // import { compile } from "https://esm.sh/svelte@4.2.9/compiler";
 // import { compile } from "npm:svelte/compiler";
-import { compile } from "npm:svelte@5.0.0-next.41/compiler";
+import { compile } from "npm:svelte@5.0.0-next.44/compiler";
 import { join, extname } from "https://deno.land/std@0.212.0/path/mod.ts";
 
 

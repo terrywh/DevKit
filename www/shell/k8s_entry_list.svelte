@@ -16,9 +16,10 @@
 
 <div class="list-group">
     {#each $k8sEntry.store as e, i}
-    <a href="#index={i}" class="list-group-item list-group-item-action" class:active={$route.get("entry", 0)==i}
+    <a href="#index={i}" class="list-group-item list-group-item-action" class:list-group-item-primary={$route.get("entry", 0)==i}
         on:click|preventDefault={() => onSelect(i)}>
-        {e.desc || e.namespace + "@" + e.cluster_id}
+        {(e.desc || e.namespace)}
+        <small class="text-secondary">{e.cluster_id && " @ " + e.cluster_id}</small>
         {#if i > 0}
         <div class="float-end btn-group mt-1">
             <button class="btn btn-light" title="删除" on:click|preventDefault|stopPropagation={() => onDelete(i)}><i class="bi bi-trash"></i></button>
