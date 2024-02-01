@@ -1,12 +1,16 @@
 <script>
-    let timeout, eFilter;
+    let timeout;
     
-    let { filter = "" } = $props();
+    let { filter = "", onsubmit = null } = $props();
+    let filterInput = $state(filter);
 
-    function doSubmit() {
+    function doSubmit(submit) {
         clearTimeout(timeout);
         timeout = setTimeout(() => {
-            filter = eFilter.value;
+            filter = filterInput;
+            if (submit && onsubmit) {
+                onsubmit(filter);
+            }
         }, 240);
     }
 
@@ -23,6 +27,6 @@
 <form on:submit|preventDefault={onSubmit}>
     <div class="input-group">
         <span class="input-group-text"><i class="bi bi-funnel"></i></span>
-        <input type="text" bind:this={eFilter} class="form-control" placeholder="搜索过滤" aria-label="filter" on:keydown={onKeydown} />
+        <input type="text" bind:value={filterInput} class="form-control" placeholder="搜索过滤" aria-label="filter" on:keydown={onKeydown} />
     </div>
 </form>

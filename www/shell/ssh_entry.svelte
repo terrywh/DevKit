@@ -65,7 +65,7 @@
     </div>
     <div class="row mb-3">
         <div class="col-12">
-            <EntryFilter bind:filter={entryFilter}></EntryFilter>
+            <EntryFilter bind:filter={entryFilter} onsubmit={onFormSubmit}></EntryFilter>
         </div>
     </div>
     <div class="row mb-2">

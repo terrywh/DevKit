@@ -7,19 +7,22 @@
     import TkeEntryJump from "./tke_entry_jump.svelte";
     import TkeEntryList from "./tke_entry_list.svelte";
 
-    let connect, connectWindowTarget, entryList, entryForm;
+    let connectForm, entryList, entryForm;
+    let connectWindowTarget = $state("");
 
-    $: {
+    $effect(() => {
         const index = $route.get("entry", 0);
         connectWindowTarget = `shell-tke-${index}`;
-    }
+    });
+
+    let entryFilter = $state("");
 
     function onJumpSubmit(e) {
         console.log("jump submit:", e.detail);
     }
 
     function onListSelect(e) {
-        entryForm.focus();
+        // entryForm.focus();
     }
 
     function onListSubmit(e) {
@@ -39,14 +42,14 @@
     }
 
     function doConnect() {
-        connect.submit();
+        connectForm.submit();
     }
 
 </script>
 
 
 <div class="container mt-2">
-    <form bind:this={connect} target={connectWindowTarget} action="/shell/shell.html">
+    <form bind:this={connectForm} target={connectWindowTarget} action="/shell/shell.html">
         <input type="hidden" name="entry" value={$route.get("entry")} />
         <input type="hidden" name="type" value="tke" />
     </form>
@@ -62,12 +65,12 @@
     </div>
     <div class="row mb-2">
         <div class="col-12">
-            <SshEntryFilter on:submit={onFilterSubmit}></SshEntryFilter>
+            <SshEntryFilter  bind:filter={entryFilter} onsubmit={onListSubmit}></SshEntryFilter>
         </div>
     </div>
     <div class="row mb-2">
         <div class="col-12">
-            <TkeEntryList bind:this={entryList} on:select={onListSelect} on:submit={onListSubmit}></TkeEntryList>
+            <TkeEntryList bind:this={entryList} bind:filter={entryFilter} on:select={onListSelect} on:submit={onListSubmit}></TkeEntryList>
         </div>
     </div>
     

@@ -5,7 +5,7 @@
 
     const dispatch = createEventDispatcher();
 
-    export let filter = "";
+    let { filter = "" } = $props();
 
     function filterApply(e, f) {
         if (!e || !f) return true;
@@ -22,7 +22,9 @@
         }
     }
 
-    $: filterSelect(filter);
+    $effect(() => {
+        filterSelect(filter);
+    });
 
     async function onSelect(index) {
         $route.put("entry", index);
