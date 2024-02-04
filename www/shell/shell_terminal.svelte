@@ -4,7 +4,7 @@
     import { WebglAddon } from "https://esm.sh/xterm-addon-webgl@0.16.0";
     import { FitAddon } from "https://esm.sh/xterm-addon-fit@0.8.0";
 
-    let { key = "", refreshing = false } = $props();
+    let { key = "" } = $props();
     /** @type {Terminal} */
     let iTerminal;
     let iFitAddon;
@@ -88,20 +88,6 @@
     export function write(message) {
         iTerminal.write(message);
     }
-    let refreshTimeout;
-    function refresh() {
-        console.log("refresh1");
-        clearTimeout(refreshTimeout);
-        refreshTimeout = setTimeout(function () {
-            iTerminal.write("\0");
-            if (refreshing) refresh();
-        }, 30000);
-    }
-
-    $effect(() => {
-        if (refreshing) refresh();
-        else clearTimeout(refreshTimeout);
-    });
 </script>
 
 <div id="terminal" style="width: 100%; height: 100%;"></div>

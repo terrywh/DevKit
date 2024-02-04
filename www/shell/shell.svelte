@@ -86,7 +86,7 @@ async function createShell(body) {
 }
 
 let cTerminal;
-let cTerminalRefreshing = false;
+let refreshing = $state(false);
 
 function createStream(key) {
     const stream = new WebSocket(`ws://127.0.0.1:8080/bash/stream?key=${key}`);
@@ -95,7 +95,7 @@ function createStream(key) {
     const promise = new Promise((resolve) => {
         stream.addEventListener("open", function(e) {
             resolve(stream);
-        });
+        }, {once: true});
     });
     cTerminal.loadAddon(new TrzszAddon(stream));
     return promise;
@@ -135,11 +135,7 @@ function createStream(key) {
 //     // })
 // }
 
-let key = "";
-
-function onRefresh(e) {
-    console.log("refresh", e);
-}
+let key = $state(""), stream;
 
 onMount(async function() {
     const body = await createBody();
@@ -150,7 +146,18 @@ onMount(async function() {
         cTerminal.write(e.toString());
         return;
     }
-    /* const stream = */await createStream(key);
+    stream = await createStream(key);
+    stream.addEventListener("close", function(e) {
+        // const colors = []
+        // for (let i = 16; i < 256; i++) {
+        //     colors.push(`\x1b[38;5;${i}m${i}\x1b[0m`)    
+        //     if ((i -4) % 12 === 11) {
+        //         colors.push('\n')
+        //     }
+        // }
+        cTerminal.write(`\r\n\x1b[38;5;202mConnection Closed, closing windows in 5s ...\x1b[0m\r\n`);
+        setTimeout(() => window.close(), 4500);
+    })
     // createKeeper(stream, term, float);
     
     window.addEventListener("resize", function() {
@@ -158,11 +165,27 @@ onMount(async function() {
     });
 });
 
+let refreshingTimeout;
+function refresh() {
+    console.log("refresh1");
+    clearTimeout(refreshingTimeout);
+    refreshingTimeout = setTimeout(function () {
+        console.log("refresh2");
+        stream.send("\0");
+        if (refreshing) refresh();
+    }, 10000);
+}
+
+$effect(() => {
+    if (refreshing) refresh();
+    else clearTimeout(refreshingTimeout);
+});
+
 </script>
 
 <div style="width: 100%; height: 100%;">
-    <ShellTerminal bind:this={cTerminal} bind:refreshing={cTerminalRefreshing} key={key} />
+    <ShellTerminal bind:this={cTerminal} key={key} />
 </div>
 <div style="position: fixed; top: 2rem; right: 4rem; z-index: 100;">
-    <ShellFloat bind:refreshing={cTerminalRefreshing} key={key} />
+    <ShellFloat bind:refreshing={refreshing} key={key} />
 </div>
