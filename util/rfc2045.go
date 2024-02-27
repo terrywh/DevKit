@@ -1,47 +1,48 @@
 package util
 
 import (
-	"encoding/base64"
 	"io"
 	"time"
 )
 
 type Rfc2045 struct {
-	w io.Writer
-	n int
-	encoder io.WriteCloser 
+	w      io.Writer
+	c      int
+	n      int
+	length int
+	buffer []byte
 }
 
-func NewRfc2045(writer io.Writer) io.WriteCloser {
-	self := &Rfc2045{w: writer, n: 76}
-	self.encoder = base64.NewEncoder(base64.StdEncoding, self)
-	return self.encoder
+func NewRfc2045(size int, w io.Writer) *Rfc2045 {
+	return &Rfc2045{w: w, c: size, n: size, buffer: make([]byte, size)}
 }
-
-// func (self *Rfc2045) Write(data []byte) (total int, err error) { 
-// 	return self.encoder.Write(data)
-// }
 
 func (self *Rfc2045) Write(data []byte) (total int, err error) {
 	var n int
-	for len(data) > 0 {
-		if len(data) < self.n {
-			if n, err = self.w.Write(data); err != nil {
-				break
-			}
-			total += n
-			self.n -= n
-			data = []byte{}
-		} else {
-			if n, err = self.w.Write(data[0:self.n]); err != nil {
-				break
-			}
-			self.w.Write([]byte{'\n'})
-			total += n + 1
-			data = data[self.n:]
-			self.n = 76
+	n = self.Flush()
+	self.n -= n
+	total += n
+	for len(data) >= self.n {
+		if n, err = self.w.Write(data[0:self.n]); err != nil {
+			break
 		}
-		time.Sleep(time.Microsecond)
+		total += n
+		self.w.Write([]byte{'\n'})
+		time.Sleep(10 * time.Microsecond)
+		data = data[n:]
+		self.n = self.c
+	}
+	self.length = len(data)
+	copy(self.buffer, data)
+	return
+}
+
+func (self *Rfc2045) Flush() (total int) {
+	var n int
+	if len(self.buffer) > 0 {
+		n, _ = self.w.Write(self.buffer[:self.length])
+		self.length = 0
+		total += n
 	}
 	return
 }
