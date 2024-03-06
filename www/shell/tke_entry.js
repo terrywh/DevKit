@@ -1,7 +1,7 @@
-import { createRoot } from "svelte";
+import { mount } from "svelte";
 import TkeEntry from "./tke_entry.svelte"
 
-const app = createRoot(TkeEntry, {
+const app = mount(TkeEntry, {
     target: document.body,
 });
 

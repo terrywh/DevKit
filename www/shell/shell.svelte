@@ -167,11 +167,9 @@ onMount(async function() {
 
 let refreshingTimeout;
 function refresh() {
-    console.log("refresh1");
     clearTimeout(refreshingTimeout);
     refreshingTimeout = setTimeout(function () {
-        console.log("refresh2");
-        stream.send("\0");
+        cTerminal.fit();
         if (refreshing) refresh();
     }, 10000);
 }

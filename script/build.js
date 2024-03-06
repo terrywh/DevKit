@@ -1,7 +1,7 @@
 // import { compile } from "https://esm.sh/svelte@4.2.9/compiler";
 // import { compile } from "npm:svelte/compiler";
-import { compile } from "npm:svelte@5.0.0-next.68/compiler";
-import { join, extname } from "https://deno.land/std@0.217.0/path/mod.ts";
+import { compile } from "npm:svelte@5.0.0-next.72/compiler";
+import { join, extname } from "https://deno.land/std@0.218.2/path/mod.ts";
 
 
 async function map() {

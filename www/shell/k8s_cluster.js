@@ -1,7 +1,7 @@
-import { createRoot } from "svelte";
+import { mount } from "svelte";
 import K8SCluster from "./k8s_cluster.svelte"
 
-const app = createRoot(K8SCluster, {
+const app = mount(K8SCluster, {
     target: document.body,
 });
 

@@ -1,7 +1,7 @@
-import { createRoot } from "svelte";
+import { mount } from "svelte";
 import Entry from "./k8s_entry.svelte"
 
-const app = createRoot(Entry, {
+const app = mount(Entry, {
     target: document.body,
 });
 

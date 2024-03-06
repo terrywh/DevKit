@@ -3,7 +3,6 @@ package ssh
 import (
 	"context"
 	"fmt"
-	"log"
 	"net"
 	"os"
 	"path/filepath"
@@ -14,9 +13,9 @@ import (
 )
 
 type controllerClientManager struct {
-	client map[string]*ssh.Client
+	client      map[string]*ssh.Client
 	clientMutex *sync.RWMutex
-	clientClose  bool
+	clientClose bool
 }
 
 func prepareControllerClientManager(c *controllerClientManager) {
@@ -28,16 +27,16 @@ func prepareControllerClientManager(c *controllerClientManager) {
 		defer cancel()
 		ticker := time.NewTicker(65 * time.Second)
 		defer ticker.Stop()
-		SERVING:
+	SERVING:
 		for {
 			select {
-			case <- ctx.Done():
+			case <-ctx.Done():
 				break SERVING
-			case <- ticker.C:
+			case <-ticker.C:
 				c.CleanupClient(ctx)
 			}
 		}
-	} ()
+	}()
 }
 
 func (c *controllerClientManager) prepareClient(req Request) (cli *ssh.Client, err error) {
@@ -58,15 +57,14 @@ func (c *controllerClientManager) prepareClient(req Request) (cli *ssh.Client, e
 		var cchan <-chan ssh.NewChannel
 		var creqs <-chan *ssh.Request
 		cconf := &ssh.ClientConfig{
-			User: route.User,
-			Auth: c.prepareAuth(route.Pass),
+			User:            route.User,
+			Auth:            c.prepareAuth(route.Pass),
 			HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 		}
 		cconn, cchan, creqs, err = ssh.NewClientConn(conn, addr, cconf)
 		if err != nil {
 			break
 		}
-		log.Println("create client: ", cconn, cchan, creqs)
 		cli = ssh.NewClient(cconn, cchan, creqs)
 		clients = append(clients, cli)
 	}
@@ -88,9 +86,9 @@ func (c *controllerClientManager) prepareAuth(pass string) (auth []ssh.AuthMetho
 		// 交互认证（动态密钥？）
 		auth = append(auth, ssh.KeyboardInteractive(func(user, instruction string, questions []string, echos []bool) (answers []string, err error) {
 			if len(questions) == 0 {
-				return []string {}, nil
+				return []string{}, nil
 			}
-			return []string { pass }, nil
+			return []string{pass}, nil
 		}))
 	}
 	return
@@ -147,5 +145,5 @@ func (c *controllerClientManager) fetchClient2(req Request) (client *ssh.Client,
 }
 
 func (c *controllerClientManager) CleanupClient(ctx context.Context) {
-	
+
 }
