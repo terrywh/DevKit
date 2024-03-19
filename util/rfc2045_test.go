@@ -19,5 +19,4 @@ func TestRfc2045(t *testing.T) {
 
 	io.Copy(encoder, source)
 	encoder.Close()
-	rfc2045.Flush()
 }

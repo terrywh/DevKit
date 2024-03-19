@@ -39,7 +39,7 @@ func (s *BashSetup) install(name string) {
 	encoder := base64.NewEncoder(base64.StdEncoding, rfc2045)
 	io.Copy(encoder, file)
 	encoder.Close()
-	rfc2045.Flush()
+	// rfc2045.Flush()
 	time.Sleep(100 * time.Millisecond)
 	// Ctrl+D x2
 	io.WriteString(s.server, "\x04")

@@ -1,6 +1,6 @@
 // import { subscribe } from "svelte/store";
 
-export function createListStorage(key, def) {
+export function createListStorage(key, def, sort) {
     const _proxy = {
         store: [], // 实际数据
         $subscriber: new Set(),
@@ -17,6 +17,7 @@ export function createListStorage(key, def) {
         load() {
             this.store = JSON.parse(localStorage.getItem(key));
             if (!this.store) this.store = def ? [def] : [];
+            if (sort) this.store = this.store.sort(sort);
             this._update();
         },
         save() {
