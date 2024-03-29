@@ -1,7 +1,6 @@
 <script>
     let timeout;
-    
-    let { filter = "", onsubmit = null } = $props();
+    let { filter = $bindable(""), onsubmit = null } = $props();
     let filterInput = $state(filter);
 
     function doSubmit(submit) {

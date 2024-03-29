@@ -1,5 +1,5 @@
 <script>
-    let { key = "", refreshing = false } = $props();
+    let { key = "", refreshing = $bindable(false) } = $props();
     let configuring = 0, copying = 0;
 
     async function onConfig(e, arch) {

@@ -39,7 +39,11 @@ async function already(version) {
 async function download(version) {
     const arch = architecture();
     const name = executable();
-    const rsp = await fetch(`https://dl.k8s.io/release/${version}/bin/${Deno.build.os}/${arch}/kubectl`);
+    let ext = "";
+    if (Deno.build.os == "windows") {
+        ext = ".exe";
+    }
+    const rsp = await fetch(`https://dl.k8s.io/release/${version}/bin/${Deno.build.os}/${arch}/kubectl${ext}`);
     await Deno.writeFile(name, rsp.body);
 }
 

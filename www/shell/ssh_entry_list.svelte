@@ -5,7 +5,7 @@
 
     const dispatch = createEventDispatcher();
     // const dispatch = console.log.bind(console);
-    let { filter = "" } = $props();
+    let { filter = $bindable("") } = $props();
 
     function onSelect(index, e) {
         if (!$sshEntry.store[index]) return;

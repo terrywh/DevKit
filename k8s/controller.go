@@ -16,18 +16,20 @@ import (
 
 type Controller struct {
 	Executable string
-	ConfigDir string
+	ConfigDir  string
 }
 
 func NewController() *Controller {
 	home, _ := os.UserHomeDir()
 	path := filepath.Join(home, ".kube") // 配置文件存储路径(与 kubectl 保持一致)
 	os.Mkdir(path, 0o755)
-
+	var ext string
+	if runtime.GOOS == "windows" {
+		ext = ".exe"
+	}
 	return &Controller{
-		Executable: 
-			fmt.Sprintf("/Users/terryhaowu/data/htdocs/github.com/terrywh/devkit/bin/kubectl_%s_%s",
-				runtime.GOOS, runtime.GOARCH),
+		Executable: fmt.Sprintf("./bin/kubectl_%s_%s%s",
+			runtime.GOOS, runtime.GOARCH, ext),
 		ConfigDir: path,
 	}
 }
@@ -46,10 +48,10 @@ func (c *Controller) config(ctx context.Context, clusterID string) (path string,
 func (c *Controller) CreateShell(ctx context.Context, req Request) (session *Session, err error) {
 	var conf string
 	if conf, err = c.config(ctx, req.ClusterID); err != nil {
-		return 
+		return
 	}
 	session = &Session{
-		Req: req,
+		Req:  req,
 		path: c.Executable,
 		conf: conf,
 	}
@@ -72,7 +74,7 @@ func (c *Controller) buildPort(ports []interface{}) (r string) {
 	return
 }
 
-func (c *Controller) buildStat(conditions []interface{}) (string) {
+func (c *Controller) buildStat(conditions []interface{}) string {
 	for _, stat := range conditions {
 		obj := util.JSONObject(stat.(map[string]interface{}))
 		if obj.GetString("type") == "Ready" {
@@ -95,7 +97,7 @@ func (c *Controller) buildAddr(addrs []interface{}) string {
 			return obj.GetString("address")
 		}
 	}
-	return "";
+	return ""
 }
 
 func (c *Controller) DescribeCluster(ctx context.Context, req Request) (desc *Description, err error) {
@@ -122,7 +124,7 @@ func (c *Controller) DescribeCluster(ctx context.Context, req Request) (desc *De
 			if _, ok := object.Get("spec.ports").([]interface{}); !ok {
 				log.Println(object.Get("spec.ports"))
 			}
-			
+
 			svc := Svc{
 				Name:      object.GetString("metadata.name"),
 				Type:      object.GetString("spec.type"),
@@ -142,7 +144,7 @@ func (c *Controller) DescribeCluster(ctx context.Context, req Request) (desc *De
 			})
 		} else if kind == "Node" {
 			desc.Node = append(desc.Node, Node{
-				IP: c.buildAddr(object.Get("status.addresses").([]interface{})),
+				IP:     c.buildAddr(object.Get("status.addresses").([]interface{})),
 				Status: c.buildStat(object.Get("status.conditions").([]interface{})),
 			})
 		}
