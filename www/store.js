@@ -17,10 +17,10 @@ export function createListStorage(key, def, sort) {
         load() {
             this.store = JSON.parse(localStorage.getItem(key));
             if (!this.store) this.store = def ? [def] : [];
-            if (sort) this.store = this.store.sort(sort);
             this._update();
         },
         save() {
+            // if (sort) this.store = this.store.sort(sort);
             localStorage.setItem(key, JSON.stringify(this.store));
             this._update();
         },
