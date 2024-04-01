@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -48,6 +49,7 @@ RETRY:
 
 	if name == "" {
 		name = filepath.Base(bin)
+		name, _ = strings.CutSuffix(name, filepath.Ext(name))
 	}
 	path := filepath.Join(ConstConfigDir, fmt.Sprintf("%s.yaml", name))
 	file, err := os.Open(path)

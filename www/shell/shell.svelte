@@ -94,10 +94,10 @@ function createStream(key) {
     // 由 TrzszAddon 接管 stream 与 Terminal 间数据交换
     const promise = new Promise((resolve) => {
         stream.addEventListener("open", function(e) {
+            // cTerminal.loadAddon(new TrzszAddon(stream));
             resolve(stream);
         }, {once: true});
     });
-    cTerminal.loadAddon(new TrzszAddon(stream));
     return promise;
 }
 
