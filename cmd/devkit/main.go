@@ -11,16 +11,16 @@ import (
 	"github.com/terrywh/devkit/util"
 )
 
-var defaultSSHController * ssh.Controller
-var defaultK8SController * k8s.Controller
+var defaultSSHController *ssh.Controller
+var defaultK8SController *k8s.Controller
 
 func devkitAppServer() {
-	util.OnInit(defaultConfig)
-	defaultSSHController = ssh.NewController() 
+	util.OnInit("devkit", defaultConfig)
+	defaultSSHController = ssh.NewController()
 	defaultK8SController = k8s.NewController()
 
 	server := http.NewServeMux()
-	
+
 	apiServer := InitAppServer(defaultConfig.Local.Root, server)
 	InitBashServer(server)
 	InitClusterServer(server)

@@ -51,8 +51,9 @@ func (api *AppServer) onReady() {
 	}))
 	icon, _ := os.ReadFile("var/icon.ico")
 	systray.SetIcon(icon)
+	systray.SetTooltip("devkit")
 	// systray.SetTitle("devkit")
-	menuItem := systray.AddMenuItem("Quit", "Quit Wemeet-Hybrid")
+	menuItem := systray.AddMenuItem("Quit", "Quit devkit")
 	go func() {
 		<-menuItem.ClickedCh
 		systray.Quit()

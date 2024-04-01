@@ -21,7 +21,7 @@ type Config interface {
 
 var DefaultConfig Config
 
-func OnInit(conf interface{}) {
+func OnInit(name string, conf interface{}) {
 	if ptr, ok := conf.(Config); !ok || reflect.ValueOf(conf).Kind() != reflect.Pointer {
 		log.Fatal("failed to initialize config, must be Pointer type that satisfy: 'Config'")
 		return
@@ -30,7 +30,15 @@ func OnInit(conf interface{}) {
 	}
 
 	bin, _ := os.Executable()
-	ConstBaseDir, _ = filepath.Abs(filepath.Dir(bin))
+	ConstBaseDir, _ = filepath.Abs(bin)
+
+RETRY:
+	ConstBaseDir = filepath.Dir(ConstBaseDir)
+	initDir()
+	if _, err := os.Stat(ConstBinaryDir); os.IsNotExist(err) {
+		goto RETRY
+	}
+
 	ConstBinaryDir = filepath.Join(ConstBaseDir, "bin")
 	ConstConfigDir = filepath.Join(ConstBaseDir, "etc")
 	ConstCachesDir = filepath.Join(ConstBaseDir, "var")
@@ -38,7 +46,10 @@ func OnInit(conf interface{}) {
 	os.MkdirAll(ConstConfigDir, 0o700)
 	os.MkdirAll(ConstCachesDir, 0o700)
 
-	path := filepath.Join(ConstConfigDir, fmt.Sprintf("%s.yaml", filepath.Base(bin)))
+	if name == "" {
+		name = filepath.Base(bin)
+	}
+	path := filepath.Join(ConstConfigDir, fmt.Sprintf("%s.yaml", name))
 	file, err := os.Open(path)
 	if err == nil {
 		defer file.Close()
@@ -49,4 +60,10 @@ func OnInit(conf interface{}) {
 		log.Println("<warning> failed to initialize config: ", path, ", due to: ", err)
 		return
 	}
+}
+
+func initDir() {
+	ConstBinaryDir = filepath.Join(ConstBaseDir, "bin")
+	ConstConfigDir = filepath.Join(ConstBaseDir, "etc")
+	ConstCachesDir = filepath.Join(ConstBaseDir, "var")
 }

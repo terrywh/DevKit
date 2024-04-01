@@ -11,9 +11,7 @@ import (
 )
 
 func StartSession(ctx context.Context, s *Session) (pty Pseudo, err error) {
-	s.cpty, err = conpty.Start(fmt.Sprintf("%s --kubeconfig %s exec -n %s -it %s -- bash", s.path, s.conf, s.Req.Namespace, s.Req.Pod), conpty.ConPtyDimensions(s.Req.Cols, s.Req.Rows))
-	if err != nil {
-		return
-	}
-	return
+	return conpty.Start(
+		fmt.Sprintf("%s --kubeconfig %s exec -n %s -it %s -- bash", s.path, s.conf, s.Req.Namespace, s.Req.Pod),
+		conpty.ConPtyDimensions(s.Req.Cols, s.Req.Rows))
 }
