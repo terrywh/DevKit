@@ -5,6 +5,7 @@ go 1.21
 toolchain go1.21.5
 
 require (
+	github.com/UserExistsError/conpty v0.1.2
 	github.com/creack/pty v1.1.21
 	github.com/fatih/color v1.16.0
 	github.com/getlantern/systray v1.2.2
