@@ -13,6 +13,7 @@ require (
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.830
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/tke v1.0.830
 	github.com/trzsz/trzsz-go v1.1.7
+	github.com/webview/webview_go v0.0.0-20240220051247-56f456ca3a43
 	golang.org/x/crypto v0.17.0
 	golang.org/x/net v0.19.0
 	golang.org/x/term v0.15.0

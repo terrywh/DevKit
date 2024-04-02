@@ -1,7 +1,7 @@
 //go:build !windows
 // +build !windows
 
-package k8s
+package util
 
 import (
 	"context"
@@ -35,13 +35,13 @@ func (up UnixPseudo) Resize(cols, rows int) error {
 	return pty.Setsize(up.file, &pty.Winsize{Cols: uint16(cols), Rows: uint16(rows)})
 }
 
-func StartSession(ctx context.Context, s *Session) (Pseudo, error) {
-	var up UnixPseudo
-	var err error
-	up.proc = exec.CommandContext(ctx, s.path, "--kubeconfig", s.conf, "exec", "-n", s.Req.Namespace, "-it", s.Req.Pod, "--", "bash")
-	up.file, err = pty.StartWithSize(up.proc, &pty.Winsize{Rows: uint16(s.Req.Rows), Cols: uint16(s.Req.Cols)})
-	if err != nil {
-		return nil, err
+func StartPty(ctx context.Context, rows, cols int, cmd string, args ...string) (Pseudo, error) {
+	var uerr error
+	var upty UnixPseudo
+	upty.proc = exec.CommandContext(ctx, cmd, args...)
+	upty.file, uerr = pty.StartWithSize(upty.proc, &pty.Winsize{Rows: uint16(rows), Cols: uint16(cols)})
+	if uerr != nil {
+		return nil, uerr
 	}
-	return up, nil
+	return upty, nil
 }

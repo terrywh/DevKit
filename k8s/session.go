@@ -4,30 +4,24 @@ import (
 	"context"
 	"io"
 	"time"
-)
 
-type Pseudo interface {
-	io.ReadWriteCloser
-	Resize(cols, rows int) error
-}
+	"github.com/terrywh/devkit/util"
+)
 
 type Session struct {
 	Req  Request
 	path string
 	conf string // *.kubeconfig
 
-	cpty Pseudo
+	cpty util.Pseudo
 }
 
 func (s *Session) Start(ctx context.Context) (err error) {
-	s.cpty, err = StartSession(ctx, s)
+	s.cpty, err = util.StartPty(ctx, s.Req.Rows, s.Req.Cols, s.path, "--kubeconfig", s.conf, "exec", "-n", s.Req.Namespace, "-it", s.Req.Pod, "--", "bash")
 	return
 }
 
 func (s *Session) Serve(ctx context.Context) (err error) {
-	if err = s.proc.Start(); err != nil {
-		return err
-	}
 	if s.Req.Command != "" {
 		time.Sleep(100 * time.Millisecond)
 		io.WriteString(s.cpty, s.Req.Command)

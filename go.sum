@@ -117,6 +117,8 @@ github.com/trzsz/promptui v0.10.5 h1:tlzJkx+JOeE0sqKWmqgaoToZiYqj5G1Mz+QDV97VFu8
 github.com/trzsz/promptui v0.10.5/go.mod h1:GMZtu6ZTzU73CBFkzGtmB4wnTROIAbv4GFA74fV8V8g=
 github.com/trzsz/trzsz-go v1.1.7 h1:sPwLHkQGeXwbFM/GcZ8I5ie+mSS+dZCGAifOWeiIQ6o=
 github.com/trzsz/trzsz-go v1.1.7/go.mod h1:3OBY6NJx3Z7A5akhfunPkhh6Qtk9lMwnP/YCwjIu16g=
+github.com/webview/webview_go v0.0.0-20240220051247-56f456ca3a43 h1:PwbNdNumoKba+ZgrE6ZpSluJfNJfyMuqwVyUB5+iLDI=
+github.com/webview/webview_go v0.0.0-20240220051247-56f456ca3a43/go.mod h1:yE65LFCeWf4kyWD5re+h4XNvOHJEXOCOuJZ4v8l5sgk=
 github.com/yuin/goldmark v1.3.5/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=
 go.opentelemetry.io/otel v1.9.0/go.mod h1:np4EoPGzoPs3O67xUVNoPPcmSvsfOxNlNA4F4AC+0Eo=
 go.opentelemetry.io/otel v1.21.0 h1:hzLeKBZEL7Okw2mGzZ0cc4k/A7Fta0uoPgaJCr8fsFc=
