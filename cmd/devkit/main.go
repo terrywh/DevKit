@@ -15,7 +15,7 @@ var defaultSSHController *ssh.Controller
 var defaultK8SController *k8s.Controller
 
 func devkitAppServer() {
-	util.OnInit("", defaultConfig)
+	util.OnInit("devkit", defaultConfig)
 	defaultSSHController = ssh.NewController()
 	defaultK8SController = k8s.NewController()
 

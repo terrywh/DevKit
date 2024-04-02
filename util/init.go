@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -32,25 +31,17 @@ func OnInit(name string, conf interface{}) {
 
 	bin, _ := os.Executable()
 	ConstBaseDir, _ = filepath.Abs(bin)
-
 RETRY:
 	ConstBaseDir = filepath.Dir(ConstBaseDir)
-	initDir()
+	initConstDir()
 	if _, err := os.Stat(ConstBinaryDir); os.IsNotExist(err) {
 		goto RETRY
 	}
 
-	ConstBinaryDir = filepath.Join(ConstBaseDir, "bin")
-	ConstConfigDir = filepath.Join(ConstBaseDir, "etc")
-	ConstCachesDir = filepath.Join(ConstBaseDir, "var")
-	os.MkdirAll(ConstBinaryDir, 0o766)
-	os.MkdirAll(ConstConfigDir, 0o700)
-	os.MkdirAll(ConstCachesDir, 0o700)
-
 	if name == "" {
 		name = filepath.Base(bin)
-		name, _ = strings.CutSuffix(name, filepath.Ext(name))
 	}
+
 	path := filepath.Join(ConstConfigDir, fmt.Sprintf("%s.yaml", name))
 	file, err := os.Open(path)
 	if err == nil {
@@ -64,7 +55,7 @@ RETRY:
 	}
 }
 
-func initDir() {
+func initConstDir() {
 	ConstBinaryDir = filepath.Join(ConstBaseDir, "bin")
 	ConstConfigDir = filepath.Join(ConstBaseDir, "etc")
 	ConstCachesDir = filepath.Join(ConstBaseDir, "var")

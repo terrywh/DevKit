@@ -25,6 +25,9 @@ func (s *Session) Start(ctx context.Context) (err error) {
 }
 
 func (s *Session) Serve(ctx context.Context) (err error) {
+	if err = s.proc.Start(); err != nil {
+		return err
+	}
 	if s.Req.Command != "" {
 		time.Sleep(100 * time.Millisecond)
 		io.WriteString(s.cpty, s.Req.Command)
