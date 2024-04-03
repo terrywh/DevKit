@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/quic-go/quic-go"
-	"github.com/terrywh/devkit/cmd/v2/stream"
 )
 
 type Options struct {
@@ -32,7 +31,7 @@ func New() *Client {
 
 func (cli *Client) ParseFlags() {
 	flag.StringVar(&cli.options.File, "file", "", "file path to transfer to server")
-	flag.StringVar(&cli.options.Addr, "addr", "", "connect to server, eg. 127.0.0.1:12345")
+	flag.StringVar(&cli.options.Addr, "addr", "127.0.0.1:12345", "connect to server, eg. 127.0.0.1:12345")
 }
 
 // func (cli *Client) Handle(name string, handle Handler) {
@@ -68,6 +67,8 @@ func (cli *Client) Serve(ctx context.Context, wg *sync.WaitGroup) {
 	}
 	defer s.Close()
 
-	sf := &StreamFile{Path: cli.options.File}
-	sf.ServeStream(context.Background(), s, s)
+	// sf := &StreamFile{Path: cli.options.File}
+	// sf.ServeStream(context.Background(), s, s)
+	OpenShell(s, "bash")
+
 }

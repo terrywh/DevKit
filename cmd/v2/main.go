@@ -9,7 +9,7 @@ import (
 	"github.com/terrywh/devkit/cmd/v2/server"
 )
 
-func main_backup() {
+func main() {
 	svr := server.New()
 	cli := client.New()
 
@@ -24,9 +24,9 @@ func main_backup() {
 	wg.Wait()
 }
 
-func main() {
-	wg := &sync.WaitGroup{}
-	wg.Add(1)
-	RunWebview(context.Background(), wg)
-	wg.Wait()
-}
+// func main() {
+// 	wg := &sync.WaitGroup{}
+// 	wg.Add(1)
+// 	RunWebview(context.Background(), wg)
+// 	wg.Wait()
+// }

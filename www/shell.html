@@ -1,0 +1,108 @@
+<!doctype html>
+<html style="width: 100%; height: 100%">
+    <head>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
+            integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM"
+            crossorigin="anonymous">
+        <link href="https://cdn.jsdelivr.net/npm/xterm/css/xterm.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+        <link rel="icon" type="image/png" href="/shell/shell.png" />
+    </head>
+    <body style="width: 100%; height: 100%;">
+        <div id="term" style="width: 100%; height: 100%;"></div>
+        <script type="module">
+            import { Terminal } from "https://esm.sh/xterm@5.3.0";
+            import { WebglAddon } from "https://esm.sh/xterm-addon-webgl@0.16.0";
+            import { FitAddon } from "https://esm.sh/xterm-addon-fit@0.8.0";
+            import { AttachAddon } from "https://esm.sh/xterm-addon-attach@0.9.0";
+
+            function createTerminal(session_id) {
+                const term = new Terminal({
+                    theme: {
+                        foreground: "#c5c8c6",
+                        background: "#161719",
+                        cursor: "#d0d0d0",
+
+                        black: "#000000",
+                        brightBlack: "#000000",
+
+                        red: "#fd5ff1",
+                        brightRed: "#fd5ff1",
+
+                        green: "#87c38a",
+                        brightGreen: "#94fa36",
+
+                        yellow: "#ffd7b1",
+                        brightYellow: "#f5ffa8",
+
+                        blue: "#85befd",
+                        brightBlue: "#96cbfe",
+
+                        magenta: "#b9b6fc",
+                        brightMagenta: "#b9b6fc",
+
+                        cyan: "#85befd",
+                        brightCyan: "#85befd",
+
+                        white: "#e0e0e0",
+                        brightWhite: "#e0e0e0",
+                    },
+                    cursorStyle: "bar",
+                    fontFamily: "Intel One Mono",
+                    fontSize: 16,
+                    lineHeight: 1.2,
+                });
+                term.open(document.getElementById("term"));
+                const addonFit = new FitAddon();
+                term.loadAddon(addonFit);
+                term.loadAddon(new (WebglAddon.WebglAddon || WebglAddon)());
+                term.focus();
+                term.onResize(async function (e) {
+                    const rsp = await fetch(`/shell/${session_id}/resize`, {
+                        method: "POST",
+                        headers: {
+                            "content-type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            rows: e.rows,
+                            cols: e.cols,
+                        }),
+                    });
+                });
+                return term;
+            }
+
+            async function startShell(device_id) {
+                const rsp = await fetch("/shell/start", {
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    method: "POST",
+                    body: JSON.stringify({
+                        "device_id": device_id,
+                    }),
+                });
+                const data = await rsp.json();
+                return data.session_id;
+            }
+            
+            function createSocket(session_id) {
+                const sock = new WebSocket(`ws://${location.host}/shell/${session_id}/socket`, "shell");
+                sock.binaryType = "arraybuffer";
+                // 由 TrzszAddon 接管 stream 与 Terminal 间数据交换
+                const promise = new Promise((resolve) => {
+                    sock.addEventListener("open", function(e) {
+                        // cTerminal.loadAddon(new TrzszAddon(stream));
+                        resolve(sock);
+                    }, {once: true});
+                });
+                return promise;
+            }
+
+            const session_id = startShell()
+            const term = await createTerminal(session_id);
+            const sock = await createSocket(session_id);
+            term.loadAddon(new AttachAddon(sock));
+        </script>
+    </body>
+</html>

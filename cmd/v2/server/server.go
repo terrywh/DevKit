@@ -12,7 +12,6 @@ import (
 	"sync"
 
 	"github.com/quic-go/quic-go"
-	"github.com/terrywh/devkit/cmd/v2/stream"
 )
 
 type ServerOptions struct {
@@ -36,6 +35,10 @@ func New() *Server {
 	svr.handler["StreamFile"] = ServerHandler{
 		Request: &stream.StreamFileReq{},
 		Handler: &StreamFile{},
+	}
+	svr.handler["OpenShell"] = ServerHandler{
+		Request: &stream.OpenShellReq{},
+		Handler: &OpenShell{},
 	}
 	return svr
 }
@@ -98,8 +101,8 @@ func (svr *Server) serveStream(ctx context.Context, s quic.Stream) {
 	request := strings.SplitN(x, ":", 2)
 	if handler, found := svr.handler[request[0]]; found {
 		log.Println("<server.Server> handle:", request[0])
-		req := reflect.New(reflect.TypeOf(handler).Elem())
-		json.Unmarshal([]byte(request[1]), req)
+		req := reflect.New(reflect.TypeOf(handler.Request).Elem())
+		json.Unmarshal([]byte(request[1]), req.Interface())
 		handler.Handler.ServeStream(ctx, req.Interface().(stream.Request), r, s)
 	} else {
 		log.Println("<server.Server> handle not found:", request[0])

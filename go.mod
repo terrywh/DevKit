@@ -1,14 +1,15 @@
 module github.com/terrywh/devkit
 
-go 1.21
+go 1.22
 
-toolchain go1.21.5
+toolchain go1.22.1
 
 require (
 	github.com/UserExistsError/conpty v0.1.2
 	github.com/creack/pty v1.1.21
 	github.com/fatih/color v1.16.0
 	github.com/getlantern/systray v1.2.2
+	github.com/google/uuid v1.6.0
 	github.com/quic-go/quic-go v0.42.0
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.830
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/tke v1.0.830
@@ -18,6 +19,7 @@ require (
 	golang.org/x/net v0.19.0
 	golang.org/x/term v0.15.0
 	gopkg.in/yaml.v3 v3.0.1
+	nhooyr.io/websocket v1.8.10
 )
 
 require (
