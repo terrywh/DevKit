@@ -8,6 +8,7 @@ import (
 	"log"
 	"sync"
 
+	"github.com/quic-go/quic-go"
 	"github.com/terrywh/devkit/entity"
 	"github.com/terrywh/devkit/stream"
 	"github.com/terrywh/devkit/util"
@@ -29,6 +30,8 @@ func NewServerShellHandler(mux *stream.ServeMux) (h *ServerShellHandler) {
 		start: make(map[entity.ShellID]*ServerShell),
 		mutex: &sync.RWMutex{},
 	}
+	mux.HandleFunc("/shell/start", h.HandleStart)
+	mux.HandleFunc("/shell/resize", h.HandleResize)
 	// TODO cleanup
 	return h
 }
@@ -51,7 +54,7 @@ func (h *ServerShellHandler) get(id entity.ShellID) *ServerShell {
 	return h.start[id]
 }
 
-func (hss *ServerShellHandler) HandleStream(ctx context.Context, r *bufio.Reader, w io.Writer) {
+func (hss *ServerShellHandler) HandleStart(ctx context.Context, r *bufio.Reader, w io.WriteCloser) {
 	var err error
 	e := &ServerShell{}
 	json.NewDecoder(r).Decode(&e)
@@ -68,11 +71,25 @@ func (hss *ServerShellHandler) HandleStream(ctx context.Context, r *bufio.Reader
 	hss.put(e)
 	defer hss.del(e)
 
-	go io.Copy(w, e.cpty)
-	io.Copy(e.cpty, r)
+	log.Println("<ServerShellHandler> shell: ", &e.cpty, " started ...")
+	wg := &sync.WaitGroup{}
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		io.Copy(w, e.cpty)
+		w.(quic.Stream).CancelRead(quic.StreamErrorCode(0)) // 当 cpty 已关闭，不再处理用户输入
+		w.Close()
+	}()
+	go func() {
+		defer wg.Done()
+		io.Copy(e.cpty, r)
+		e.cpty.Close()
+	}()
+	wg.Wait()
+	log.Println("<ServerShellHandler> shell: ", &e.cpty, " closed.")
 }
 
-func (hss *ServerShellHandler) HandleResize(ctx context.Context, r *bufio.Reader, w io.Writer) {
+func (hss *ServerShellHandler) HandleResize(ctx context.Context, r *bufio.Reader, w io.WriteCloser) {
 	e1 := &ServerShell{}
 	json.NewDecoder(r).Decode(&e1)
 

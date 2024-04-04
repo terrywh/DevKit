@@ -4,6 +4,7 @@ import (
 	"flag"
 
 	"github.com/terrywh/devkit/stream"
+	"github.com/terrywh/devkit/util"
 )
 
 type Options struct {
@@ -17,12 +18,16 @@ var DefaultOptions Options
 
 func main() {
 	flag.StringVar(&DefaultOptions.http, "http", "127.0.0.1:18080", "serve web ui on this address")
-	flag.StringVar(&DefaultOptions.addr, "bind", "0.0.0.0:18080", "serve QUIC stream on this address")
+	flag.StringVar(&DefaultOptions.addr, "bind", "0.0.0.0:18081", "serve QUIC stream on this address")
 	flag.StringVar(&DefaultOptions.cert, "cert", "./var/cert/server.crt", "certificate to use for QUIC (server only)")
-	flag.StringVar(&DefaultOptions.pkey, "pkey", "./var/pkey/server.key", "private key to use for QUIC (server only)")
+	flag.StringVar(&DefaultOptions.pkey, "pkey", "./var/cert/server.key", "private key to use for QUIC (server only)")
 	flag.Parse()
 
 	stream.InitTransport(stream.TransportOptions{LocalAddress: DefaultOptions.addr})
 	defer stream.DefaultTransport.Close()
 
+	sc := util.NewServiceController()
+	sc.Start(newQuicService())
+	sc.WaitForSignal()
+	sc.Shutdown()
 }

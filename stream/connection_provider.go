@@ -10,17 +10,14 @@ import (
 
 type ConnectionProvider interface {
 	Acquire(ctx context.Context, devId entity.DeviceID) (quic.Connection, error)
-	Close() error
 }
 
 type DirectProvider struct {
-	conn map[entity.DeviceID]quic.Connection
 	addr map[entity.DeviceID][]string
 }
 
 func NewDirectProvider() (dp *DirectProvider) {
 	dp = &DirectProvider{
-		conn: make(map[entity.DeviceID]quic.Connection),
 		addr: make(map[entity.DeviceID][]string),
 	}
 	return dp
@@ -29,17 +26,12 @@ func NewDirectProvider() (dp *DirectProvider) {
 func (mgr *DirectProvider) Acquire(ctx context.Context, id entity.DeviceID) (conn quic.Connection, err error) {
 	var ok bool
 	var addr []string
-	if conn, ok = mgr.conn[id]; !ok {
-		if addr, ok = mgr.addr[id]; !ok {
-			addr = mgr.acquireAddress(ctx, id)
-			mgr.addr[id] = addr
-		}
-		conn, err = mgr.dial(ctx, addr)
-		if err != nil {
-			return
-		}
-		mgr.conn[id] = conn
+
+	if addr, ok = mgr.addr[id]; !ok {
+		addr = mgr.acquireAddress(ctx, id)
+		mgr.addr[id] = addr
 	}
+	conn, err = mgr.dial(ctx, addr)
 	return
 }
 
@@ -55,11 +47,4 @@ func (mgr *DirectProvider) dial(ctx context.Context, addrs []string) (conn quic.
 		}
 	}
 	return
-}
-
-func (mgr *DirectProvider) Close() error {
-	for _, conn := range mgr.conn {
-		conn.CloseWithError(quic.ApplicationErrorCode(0), "close")
-	}
-	return nil
 }

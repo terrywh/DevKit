@@ -1,7 +1,7 @@
 // import { compile } from "https://esm.sh/svelte@4.2.9/compiler";
 // import { compile } from "npm:svelte/compiler";
-import { compile } from "npm:svelte@5.0.0-next.88/compiler";
-import { join, extname } from "https://deno.land/std@0.218.2/path/mod.ts";
+import { compile } from "svelte/compiler";
+import { join, extname } from "node:path";
 
 
 async function map() {
@@ -22,9 +22,9 @@ async function map() {
         }
     }
     map.imports["esm-env"] = "/node_modules/esm-env/prod-browser.js";
-    // map.imports["xterm"] = "/node_modules/xterm/lib/xterm.js";
-    // map.imports["xterm-addon-webgl"] = "/node_modules/xterm-addon-webgl/lib/xterm-addon-webgl.js";
-    // map.imports["xterm-addon-fit"] = "/node_modules/xterm-addon-fit/lib/xterm-addon-fit.js";
+    map.imports["xterm"] = "/node_modules/xterm/lib/xterm.js";
+    map.imports["xterm-addon-webgl"] = "/node_modules/xterm-addon-webgl/lib/xterm-addon-webgl.js";
+    map.imports["xterm-addon-fit"] = "/node_modules/xterm-addon-fit/lib/xterm-addon-fit.js";
     // map.imports["trzsz"] = "/node_modules/trzsz/lib/trzsz.mjs";
     return map;
 }

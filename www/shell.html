@@ -1,20 +1,18 @@
 <!doctype html>
 <html style="width: 100%; height: 100%">
     <head>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
-            integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM"
-            crossorigin="anonymous">
-        <link href="https://cdn.jsdelivr.net/npm/xterm/css/xterm.css" rel="stylesheet">
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+        <link href="/node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link href="/node_modules/bootstrap-icons/font/bootstrap-icons.min.css" rel="stylesheet">
+        <link href="/node_modules/xterm/css/xterm.css" rel="stylesheet">
         <link rel="icon" type="image/png" href="/shell/shell.png" />
     </head>
     <body style="width: 100%; height: 100%;">
         <div id="term" style="width: 100%; height: 100%;"></div>
         <script type="module">
-            import { Terminal } from "https://esm.sh/xterm@5.3.0";
-            import { WebglAddon } from "https://esm.sh/xterm-addon-webgl@0.16.0";
-            import { FitAddon } from "https://esm.sh/xterm-addon-fit@0.8.0";
-            import { AttachAddon } from "https://esm.sh/xterm-addon-attach@0.9.0";
+            import "/node_modules/xterm/lib/xterm.js";
+            import "/node_modules/xterm-addon-webgl/lib/xterm-addon-webgl.js";
+            import "/node_modules/xterm-addon-fit/lib/xterm-addon-fit.js";
+            import "/node_modules/xterm-addon-attach/lib/xterm-addon-attach.js";
 
             function createTerminal(session_id) {
                 const term = new Terminal({
@@ -53,7 +51,7 @@
                     lineHeight: 1.2,
                 });
                 term.open(document.getElementById("term"));
-                const addonFit = new FitAddon();
+                const addonFit = new (FitAddon.FitAddon || FitAddon)();
                 term.loadAddon(addonFit);
                 term.loadAddon(new (WebglAddon.WebglAddon || WebglAddon)());
                 term.focus();
@@ -82,8 +80,9 @@
                         "device_id": device_id,
                     }),
                 });
-                const data = await rsp.json();
-                return data.session_id;
+                const payload = await rsp.json();
+                if (payload.error && payload.error.code > 0) throw Error(`failed to start shell: ${payload.error.info}`);
+                return payload.data
             }
             
             function createSocket(session_id) {
@@ -92,17 +91,16 @@
                 // 由 TrzszAddon 接管 stream 与 Terminal 间数据交换
                 const promise = new Promise((resolve) => {
                     sock.addEventListener("open", function(e) {
-                        // cTerminal.loadAddon(new TrzszAddon(stream));
                         resolve(sock);
                     }, {once: true});
                 });
                 return promise;
             }
 
-            const session_id = startShell()
+            const session_id = await startShell("127.0.0.1:18081")
             const term = await createTerminal(session_id);
             const sock = await createSocket(session_id);
-            term.loadAddon(new AttachAddon(sock));
+            term.loadAddon(new (AttachAddon.AttachAddon || AttachAddon)(sock));
         </script>
     </body>
 </html>

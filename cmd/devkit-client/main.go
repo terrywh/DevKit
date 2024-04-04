@@ -1,11 +1,10 @@
 package main
 
 import (
-	"context"
 	"flag"
-	"sync"
 
 	"github.com/terrywh/devkit/stream"
+	"github.com/terrywh/devkit/util"
 )
 
 type Options struct {
@@ -30,13 +29,8 @@ func main() {
 	stream.InitSessionManager(stream.NewDirectProvider())
 	defer stream.DefaultSessionManager.Close()
 
-	wg := &sync.WaitGroup{}
-	svc_http := newServiceHttp()
-
-	flag.Parse()
-
-	wg.Add(1)
-	go svc_http.Serve(context.Background())
-
-	wg.Wait()
+	sc := util.NewServiceController()
+	sc.Start(newServiceHttp())
+	sc.WaitForSignal()
+	sc.Shutdown()
 }

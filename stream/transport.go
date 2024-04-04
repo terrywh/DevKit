@@ -45,7 +45,12 @@ func (tr *Transport) LocalAddress() net.Addr {
 	return tr.transport.Conn.LocalAddr()
 }
 
+type ServerHandler interface {
+	ServeStream(ctx context.Context, s quic.Stream)
+}
+
 type ServerOptions struct {
+	Handler     ServerHandler
 	Certificate string
 	PrivateKey  string
 
@@ -62,19 +67,23 @@ func (so *ServerOptions) ApplyDefaults() {
 	}
 }
 
-func (tr *Transport) CreateServer(options ServerOptions) (*quic.Listener, error) {
+func (tr *Transport) CreateServer(options ServerOptions) (*Server, error) {
 	options.ApplyDefaults()
 	cert, err := tls.LoadX509KeyPair(options.Certificate, options.PrivateKey)
 	if err != nil {
 		return nil, err
 	}
-	return tr.transport.Listen(&tls.Config{
+	l, err := tr.transport.Listen(&tls.Config{
 		Certificates: []tls.Certificate{cert},
 		NextProtos:   []string{options.ApplicationProtocol},
 	}, &quic.Config{
 		KeepAlivePeriod: 25 * time.Second,
 		Allow0RTT:       true,
 	})
+	if err != nil {
+		return nil, err
+	}
+	return newServer(l, options.Handler)
 }
 
 type DialOptions struct {
@@ -113,6 +122,9 @@ func (tr *Transport) DialEx(ctx context.Context, options DialOptions) (conn quic
 	return
 }
 
-func (tr *Transport) Close() error {
-	return tr.transport.Close()
+func (tr *Transport) Close() (err error) {
+	if tr.transport != nil {
+		err = tr.transport.Close()
+	}
+	return
 }

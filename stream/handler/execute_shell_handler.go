@@ -35,9 +35,9 @@ func (s *ExecuteShell) ServeServer(ctx context.Context, r *bufio.Reader, w io.Wr
 	cmd.Stderr = w
 	err := cmd.Run()
 	if ee, ok := err.(*exec.ExitError); ok {
-		fmt.Fprintf(w, "\n{\"exit\":%d,\"cost\":%.2fs}\n", ee.ExitCode(), time.Since(start).Seconds())
+		fmt.Fprintf(w, "\n{\"data\":{\"exit\":%d,\"cost\":%.2fs}}\n", ee.ExitCode(), time.Since(start).Seconds())
 	} else if err != nil {
-		fmt.Fprintln(w, err)
+		fmt.Fprintln(w, "\n{\"error\":{\"code\":%d,\"info\":\"%s\"}}\n", err)
 	} else {
 		fmt.Fprintf(w, "\n{\"exit\":0,\"cost\":%.2fs}\n", time.Since(start).Seconds())
 	}

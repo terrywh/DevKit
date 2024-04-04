@@ -16,6 +16,10 @@ func newQuicService() (qs *QuicService) {
 	return qs
 }
 
-func (s *QuicService) Serve(ctx context.Context) {
-	<-ctx.Done()
+func (qs *QuicService) Serve(ctx context.Context) {
+
+}
+
+func (s *QuicService) Close() error {
+	return nil
 }

@@ -2,6 +2,7 @@ package stream
 
 import (
 	"context"
+	"log"
 	"sync"
 
 	"github.com/quic-go/quic-go"
@@ -30,7 +31,6 @@ func (s *SessionManager) Close() {
 	for _, session := range s.session {
 		session.Close()
 	}
-	s.provider.Close()
 }
 
 func (mgr *SessionManager) Acquire(ctx context.Context, device_id entity.DeviceID) (s *Session, err error) {
@@ -48,9 +48,10 @@ func (mgr *SessionManager) Acquire(ctx context.Context, device_id entity.DeviceI
 	}
 	mgr.session[device_id] = s
 	go func() {
+		log.Println("<SessionManager.Acquire> connection: ", &s.conn, " started ...")
 		// 监听链接持续时间
 		<-s.conn.Context().Done()
-
+		log.Println("<SessionManager.Acquire> connection: ", &s.conn, " closed.")
 		mgr.mutex.Lock()
 		defer mgr.mutex.Unlock()
 		delete(mgr.session, device_id)

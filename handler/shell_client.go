@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"io"
@@ -19,12 +20,12 @@ import (
 
 type ClientShellHandler struct {
 	HttpHandlerBase
-	start map[entity.ShellID]*entity.StartShell
+	shell map[entity.ShellID]*entity.StartShell
 }
 
 func NewClientShellHandler(mux *http.ServeMux) *ClientShellHandler {
 	css := &ClientShellHandler{}
-	css.start = make(map[entity.ShellID]*entity.StartShell)
+	css.shell = make(map[entity.ShellID]*entity.StartShell)
 
 	mux.HandleFunc("/shell/start", css.HandleStart)
 	mux.HandleFunc("/shell/{shell_id}/socket", css.HandleSocket)
@@ -58,31 +59,31 @@ func (css *ClientShellHandler) HandleSocket(rsp http.ResponseWriter, req *http.R
 		Subprotocols: []string{"shell"},
 	})
 	if err != nil {
-		log.Println("<ServiceHttpShell.handleSocket> failed to accept websocket: ", err)
+		log.Println("<ServiceHttpShell.HandleSocket> failed to accept websocket: ", err)
 		return
 	}
 	defer c.CloseNow()
 
 	shell_id := entity.ShellID(req.PathValue("shell_id"))
 	defer func() {
-		delete(css.start, shell_id)
+		delete(css.shell, shell_id)
 	}()
 
-	e, ok := css.start[shell_id]
+	e, ok := css.shell[shell_id]
 	if !ok {
-		log.Println("<ServiceHttpShell.handleSocket> failed to find shell: ", shell_id)
+		log.Println("<ServiceHttpShell.HandleSocket> failed to find shell: ", shell_id)
 		return
 	}
 
 	s, err := stream.DefaultSessionManager.AcquireStream(ctx, e.DeviceId)
 	if err != nil {
-		log.Println("<ServiceHttpShell.handleSocket> failed to acquire stream: ", err)
+		log.Println("<ServiceHttpShell.HandleSocket> failed to acquire stream: ", err)
 		return
 	}
 
-	r, w, err := css.splitSocket(ctx, c)
+	r, w := css.splitSocket(ctx, c)
 	if err != nil {
-		log.Println("<ServiceHttpShell.handleSocket> failed to split socket: ", err)
+		log.Println("<ServiceHttpShell.HandleSocket> failed to split socket: ", err)
 		return
 	}
 	css.serveShell(ctx, e, s, r, w)
@@ -96,20 +97,13 @@ func (css *ClientShellHandler) prepareShell(ctx context.Context, e *entity.Start
 		return
 	}
 	shell_id = entity.ShellID(uuid.New().String())
-	css.start[shell_id] = e
+	css.shell[shell_id] = e
 	return
 }
 
-func (css *ClientShellHandler) splitSocket(ctx context.Context, c *websocket.Conn) (r io.Reader, w io.WriteCloser, err error) {
-	var typ websocket.MessageType
-	typ, r, err = c.Reader(ctx)
-	if err != nil {
-		return
-	}
-	w, err = c.Writer(ctx, typ)
-	if err != nil {
-		return
-	}
+func (css *ClientShellHandler) splitSocket(ctx context.Context, c *websocket.Conn) (r io.Reader, w io.WriteCloser) {
+	r = &WebSocketReader{ctx, c, &bytes.Buffer{}}
+	w = &WebSocketWriteCloser{ctx, c}
 	return
 }
 
@@ -122,7 +116,7 @@ func (css *ClientShellHandler) serveShell(_ context.Context, e *entity.StartShel
 		defer term.Restore(int(os.Stdin.Fd()), state)
 	}
 
-	io.WriteString(s, "StartShell:")
+	io.WriteString(s, "/shell/start:")
 	json.NewEncoder(s).Encode(e)
 
 	go io.Copy(s, r)

@@ -35,7 +35,10 @@ func (HttpHandlerBase) Failure(w http.ResponseWriter, err error) {
 		})
 	} else {
 		json.NewEncoder(w).Encode(entity.HttpResponse{
-			Error: entity.ErrUnknown,
+			Error: entity.HttpError{
+				Code: entity.ErrUnknown.Code,
+				Info: err.Error(),
+			},
 		})
 	}
 }
