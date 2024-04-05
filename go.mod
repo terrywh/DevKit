@@ -8,6 +8,7 @@ require (
 	github.com/UserExistsError/conpty v0.1.2
 	github.com/creack/pty v1.1.21
 	github.com/fatih/color v1.16.0
+	github.com/fsnotify/fsnotify v1.7.0
 	github.com/getlantern/systray v1.2.2
 	github.com/google/uuid v1.6.0
 	github.com/quic-go/quic-go v0.42.0

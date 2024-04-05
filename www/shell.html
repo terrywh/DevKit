@@ -85,7 +85,7 @@
                 return payload.data
             }
             
-            function createSocket(session_id) {
+            function createSocket(session_id, term) {
                 const sock = new WebSocket(`ws://${location.host}/shell/${session_id}/socket`, "shell");
                 sock.binaryType = "arraybuffer";
                 // 由 TrzszAddon 接管 stream 与 Terminal 间数据交换
@@ -93,13 +93,20 @@
                     sock.addEventListener("open", function(e) {
                         resolve(sock);
                     }, {once: true});
+                    sock.addEventListener("close", function(e) {
+                        term.write(`\r\n\x1b[38;5;214mConnection closed, closing windows in 5s ...\x1b[0m\r\n`);
+                        if (e.reason.length > 0) {
+                            term.write(`\x1b[38;5:202mReason: ${e.reason}\x1b[0m\r\n`);
+                        }
+                        setTimeout(() => window.close(), 4500);
+                    })
                 });
                 return promise;
             }
 
             const session_id = await startShell("127.0.0.1:18081")
             const term = await createTerminal(session_id);
-            const sock = await createSocket(session_id);
+            const sock = await createSocket(session_id, term);
             term.loadAddon(new (AttachAddon.AttachAddon || AttachAddon)(sock));
         </script>
     </body>

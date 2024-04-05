@@ -3,8 +3,8 @@ package main
 import (
 	"flag"
 
+	"github.com/terrywh/devkit/application"
 	"github.com/terrywh/devkit/stream"
-	"github.com/terrywh/devkit/util"
 )
 
 type Options struct {
@@ -14,19 +14,28 @@ type Options struct {
 	pkey string
 }
 
-var DefaultOptions Options
+var DefaultOption Options
+
+type Config struct {
+	Authorize []string `yaml:"authorize"`
+}
+
+var DefaultConfig Config
 
 func main() {
-	flag.StringVar(&DefaultOptions.http, "http", "127.0.0.1:18080", "serve web ui on this address")
-	flag.StringVar(&DefaultOptions.addr, "bind", "0.0.0.0:18081", "serve QUIC stream on this address")
-	flag.StringVar(&DefaultOptions.cert, "cert", "./var/cert/server.crt", "certificate to use for QUIC (server only)")
-	flag.StringVar(&DefaultOptions.pkey, "pkey", "./var/cert/server.key", "private key to use for QUIC (server only)")
+	application.InitConfigWatcher("devkit", &DefaultConfig)
+	defer application.DefaultConfigWatcher.Close()
+
+	flag.StringVar(&DefaultOption.http, "http", "127.0.0.1:18080", "serve web ui on this address")
+	flag.StringVar(&DefaultOption.addr, "bind", "0.0.0.0:18081", "serve QUIC stream on this address")
+	flag.StringVar(&DefaultOption.cert, "cert", "./var/cert/server.crt", "certificate to use for QUIC (server only)")
+	flag.StringVar(&DefaultOption.pkey, "pkey", "./var/cert/server.key", "private key to use for QUIC (server only)")
 	flag.Parse()
 
-	stream.InitTransport(stream.TransportOptions{LocalAddress: DefaultOptions.addr})
+	stream.InitTransport(stream.TransportOptions{LocalAddress: DefaultOption.addr})
 	defer stream.DefaultTransport.Close()
 
-	sc := util.NewServiceController()
+	sc := application.NewServiceController()
 	sc.Start(newQuicService())
 	sc.WaitForSignal()
 	sc.Shutdown()

@@ -8,6 +8,7 @@ import (
 	"github.com/terrywh/devkit/entity"
 )
 
+// ConnectionProvider 链接器（不需要进行多线程保护）
 type ConnectionProvider interface {
 	Acquire(ctx context.Context, devId entity.DeviceID) (quic.Connection, error)
 }
@@ -41,7 +42,7 @@ func (mgr *DirectProvider) acquireAddress(_ context.Context, device_id entity.De
 
 func (mgr *DirectProvider) dial(ctx context.Context, addrs []string) (conn quic.Connection, err error) {
 	for _, addr := range addrs {
-		conn, err = DefaultTransport.DialEx(ctx, DialOptions{Address: addr, Retry: 2, Backoff: 1200 * time.Millisecond})
+		conn, err = DefaultTransport.Dial(ctx, DialOptions{Address: addr, Retry: 2, Backoff: 1200 * time.Millisecond})
 		if err == nil {
 			break
 		}

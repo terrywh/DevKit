@@ -15,7 +15,7 @@ type HttpService struct {
 
 func newServiceHttp() (s *HttpService) {
 	s = &HttpService{mux: http.NewServeMux()}
-	s.svr = http.Server{Addr: DefaultOptions.http, Handler: s.mux}
+	s.svr = http.Server{Addr: DefaultOption.http, Handler: s.mux}
 	handler.NewClientShellHandler(s.mux)
 	s.mux.Handle("/node_modules/", http.FileServer(http.Dir(".")))
 	s.mux.Handle("/", http.FileServer(http.Dir("www")))

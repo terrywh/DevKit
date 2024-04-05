@@ -48,9 +48,10 @@ func (mgr *SessionManager) Acquire(ctx context.Context, device_id entity.DeviceI
 	}
 	mgr.session[device_id] = s
 	go func() {
+		ctx := s.conn.Context()
 		log.Println("<SessionManager.Acquire> connection: ", &s.conn, " started ...")
 		// 监听链接持续时间
-		<-s.conn.Context().Done()
+		<-ctx.Done()
 		log.Println("<SessionManager.Acquire> connection: ", &s.conn, " closed.")
 		mgr.mutex.Lock()
 		defer mgr.mutex.Unlock()

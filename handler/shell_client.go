@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -20,12 +21,15 @@ import (
 
 type ClientShellHandler struct {
 	HttpHandlerBase
+	mutex *sync.RWMutex
 	shell map[entity.ShellID]*entity.StartShell
 }
 
 func NewClientShellHandler(mux *http.ServeMux) *ClientShellHandler {
-	css := &ClientShellHandler{}
-	css.shell = make(map[entity.ShellID]*entity.StartShell)
+	css := &ClientShellHandler{
+		mutex: &sync.RWMutex{},
+		shell: make(map[entity.ShellID]*entity.StartShell),
+	}
 
 	mux.HandleFunc("/shell/start", css.HandleStart)
 	mux.HandleFunc("/shell/{shell_id}/socket", css.HandleSocket)
@@ -34,6 +38,25 @@ func NewClientShellHandler(mux *http.ServeMux) *ClientShellHandler {
 
 	// TODO cleanup
 	return css
+}
+
+func (css *ClientShellHandler) put(e *entity.StartShell) {
+	css.mutex.Lock()
+	defer css.mutex.Unlock()
+	css.shell[e.ShellId] = e
+}
+
+func (css *ClientShellHandler) get(shell_id entity.ShellID) *entity.StartShell {
+	css.mutex.RLock()
+	defer css.mutex.RUnlock()
+
+	return css.shell[shell_id]
+}
+
+func (css *ClientShellHandler) del(e *entity.StartShell) {
+	css.mutex.Lock()
+	defer css.mutex.Unlock()
+	delete(css.shell, e.ShellId)
 }
 
 func (css *ClientShellHandler) HandleStart(rsp http.ResponseWriter, req *http.Request) {
@@ -55,6 +78,25 @@ func (css *ClientShellHandler) HandleStart(rsp http.ResponseWriter, req *http.Re
 
 func (css *ClientShellHandler) HandleSocket(rsp http.ResponseWriter, req *http.Request) {
 	ctx := context.Background()
+
+	shell_id := entity.ShellID(req.PathValue("shell_id"))
+	defer func() {
+		delete(css.shell, shell_id)
+	}()
+
+	e := css.get(shell_id)
+	if e == nil {
+		log.Println("<ServiceHttpShell.HandleSocket> failed to find shell: ", shell_id)
+		return
+	}
+	defer css.del(e)
+
+	s, err := stream.DefaultSessionManager.AcquireStream(ctx, e.DeviceId)
+	if err != nil {
+		log.Println("<ServiceHttpShell.HandleSocket> failed to acquire stream: ", err)
+		return
+	}
+
 	c, err := websocket.Accept(rsp, req, &websocket.AcceptOptions{
 		Subprotocols: []string{"shell"},
 	})
@@ -63,31 +105,12 @@ func (css *ClientShellHandler) HandleSocket(rsp http.ResponseWriter, req *http.R
 		return
 	}
 	defer c.CloseNow()
-
-	shell_id := entity.ShellID(req.PathValue("shell_id"))
-	defer func() {
-		delete(css.shell, shell_id)
-	}()
-
-	e, ok := css.shell[shell_id]
-	if !ok {
-		log.Println("<ServiceHttpShell.HandleSocket> failed to find shell: ", shell_id)
-		return
-	}
-
-	s, err := stream.DefaultSessionManager.AcquireStream(ctx, e.DeviceId)
-	if err != nil {
-		log.Println("<ServiceHttpShell.HandleSocket> failed to acquire stream: ", err)
-		return
-	}
-
 	r, w := css.splitSocket(ctx, c)
-	if err != nil {
-		log.Println("<ServiceHttpShell.HandleSocket> failed to split socket: ", err)
-		return
+	if err = css.serveShell(ctx, e, s, r, w); err != nil {
+		c.Close(websocket.StatusNormalClosure, err.Error())
+	} else {
+		c.Close(websocket.StatusNormalClosure, "")
 	}
-	css.serveShell(ctx, e, s, r, w)
-	c.Close(websocket.StatusNormalClosure, "")
 }
 
 func (css *ClientShellHandler) prepareShell(ctx context.Context, e *entity.StartShell) (shell_id entity.ShellID, err error) {
@@ -96,9 +119,9 @@ func (css *ClientShellHandler) prepareShell(ctx context.Context, e *entity.Start
 	if err != nil {
 		return
 	}
-	shell_id = entity.ShellID(uuid.New().String())
-	css.shell[shell_id] = e
-	return
+	e.ShellId = entity.ShellID(uuid.New().String())
+	css.put(e)
+	return e.ShellId, nil
 }
 
 func (css *ClientShellHandler) splitSocket(ctx context.Context, c *websocket.Conn) (r io.Reader, w io.WriteCloser) {
@@ -107,7 +130,7 @@ func (css *ClientShellHandler) splitSocket(ctx context.Context, c *websocket.Con
 	return
 }
 
-func (css *ClientShellHandler) serveShell(_ context.Context, e *entity.StartShell, s quic.Stream, r io.Reader, w io.Writer) {
+func (css *ClientShellHandler) serveShell(_ context.Context, e *entity.StartShell, s quic.Stream, r io.Reader, w io.Writer) (err error) {
 	e.ApplyDefaults()
 
 	if r == os.Stdin { // 对直接透传的 Shell 设定当前 Stdin 状态
@@ -120,7 +143,8 @@ func (css *ClientShellHandler) serveShell(_ context.Context, e *entity.StartShel
 	json.NewEncoder(s).Encode(e)
 
 	go io.Copy(s, r)
-	io.Copy(w, s)
+	_, err = io.Copy(w, s)
+	return
 }
 
 func (css *ClientShellHandler) HandleResize(rsp http.ResponseWriter, req *http.Request) {
