@@ -6,7 +6,7 @@ import (
 	_ "net/http/pprof"
 
 	"github.com/getlantern/systray"
-	"github.com/terrywh/devkit/application"
+	"github.com/terrywh/devkit/app"
 	"github.com/terrywh/devkit/k8s"
 	"github.com/terrywh/devkit/ssh"
 )
@@ -15,7 +15,7 @@ var defaultSSHController *ssh.Controller
 var defaultK8SController *k8s.Controller
 
 func devkitAppServer() {
-	application.InitConfigWatcher("devkit", defaultConfig)
+	app.InitConfigWatcher("devkit", defaultConfig)
 	defaultSSHController = ssh.NewController()
 	defaultK8SController = k8s.NewController()
 

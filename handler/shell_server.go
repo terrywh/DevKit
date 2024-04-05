@@ -10,8 +10,8 @@ import (
 
 	"github.com/quic-go/quic-go"
 	"github.com/terrywh/devkit/entity"
+	"github.com/terrywh/devkit/infra"
 	"github.com/terrywh/devkit/stream"
-	"github.com/terrywh/devkit/util"
 )
 
 type ServerShellHandler struct {
@@ -22,7 +22,7 @@ type ServerShellHandler struct {
 
 type ServerShell struct {
 	entity.StartShell
-	cpty util.Pseudo `json:"-"`
+	cpty infra.Pseudo `json:"-"`
 }
 
 func NewServerShellHandler(mux *stream.ServeMux) (h *ServerShellHandler) {
@@ -60,7 +60,7 @@ func (hss *ServerShellHandler) HandleStart(ctx context.Context, r *bufio.Reader,
 	json.NewDecoder(r).Decode(&e)
 	e.ApplyDefaults()
 
-	e.cpty, err = util.StartPty(ctx, e.Rows, e.Cols, e.ShellCmd[0], e.ShellCmd[1:]...)
+	e.cpty, err = infra.StartPty(ctx, e.Rows, e.Cols, e.ShellCmd[0], e.ShellCmd[1:]...)
 	if err != nil {
 		log.Println("<HandlerServerShell.HandleStream> failed to open pty shell: ", err)
 		hss.Failure(w, err)

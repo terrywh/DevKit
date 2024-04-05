@@ -14,11 +14,19 @@ type ConnectionProvider interface {
 }
 
 type DirectProvider struct {
+	opts DialOptions
 	addr map[entity.DeviceID][]string
 }
 
-func NewDirectProvider() (dp *DirectProvider) {
+func NewDirectProvider(opts DialOptions) (dp *DirectProvider) {
+	if opts.Backoff < time.Second {
+		opts.Backoff = 1200 * time.Millisecond
+	}
+	if opts.Retry == 0 {
+		opts.Retry = 3
+	}
 	dp = &DirectProvider{
+		opts: opts,
 		addr: make(map[entity.DeviceID][]string),
 	}
 	return dp
@@ -41,8 +49,10 @@ func (mgr *DirectProvider) acquireAddress(_ context.Context, device_id entity.De
 }
 
 func (mgr *DirectProvider) dial(ctx context.Context, addrs []string) (conn quic.Connection, err error) {
+	opts := mgr.opts
 	for _, addr := range addrs {
-		conn, err = DefaultTransport.Dial(ctx, DialOptions{Address: addr, Retry: 2, Backoff: 1200 * time.Millisecond})
+		opts.Address = addr
+		conn, err = DefaultTransport.Dial(ctx, opts)
 		if err == nil {
 			break
 		}

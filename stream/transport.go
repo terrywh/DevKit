@@ -63,20 +63,9 @@ type ServerOptions struct {
 	ApplicationProtocol string
 }
 
-func (so *ServerOptions) ApplyDefaults() {
-	if so.Certificate == "" || so.PrivateKey == "" {
-		so.Certificate = "./var/cert/server.crt"
-		so.PrivateKey = "./var/cert/server.key"
-	}
-	if so.ApplicationProtocol == "" {
-		so.ApplicationProtocol = "devkit"
-	}
-}
-
 var ErrUnauthorized error = errors.New("unauthorized")
 
 func (tr *Transport) CreateServer(options ServerOptions) (*Server, error) {
-	options.ApplyDefaults()
 	cert, err := tls.LoadX509KeyPair(options.Certificate, options.PrivateKey)
 	if err != nil {
 		return nil, err
@@ -90,7 +79,7 @@ func (tr *Transport) CreateServer(options ServerOptions) (*Server, error) {
 			for _, cert := range rawCerts {
 				hash := sha256.New()
 				hash.Write(cert)
-				if options.Authorize(fmt.Sprintf("%2x", hash.Sum(nil))) {
+				if options.Authorize(fmt.Sprintf("%02x", hash.Sum(nil))) {
 					return nil
 				}
 			}
@@ -113,18 +102,9 @@ type DialOptions struct {
 	Certificate string
 	PrivateKey  string
 
-	Retry   int           // 默认 0 时，不做重试；当 Retry < 0 时无限重试
-	Backoff time.Duration // 默认 3s 重试间隔
-}
-
-func (do *DialOptions) ApplyDefaults() {
-	if do.Certificate == "" || do.PrivateKey == "" {
-		do.Certificate = "./var/cert/server.crt"
-		do.PrivateKey = "./var/cert/server.key"
-	}
-	if do.Backoff < time.Second {
-		do.Backoff = 3 * time.Second
-	}
+	ApplicationProtocol string
+	Retry               int           // 默认 0 时，不做重试；当 Retry < 0 时无限重试
+	Backoff             time.Duration // 默认 3s 重试间隔
 }
 
 func (tr *Transport) dial(ctx context.Context, options DialOptions) (quic.Connection, error) {
@@ -132,6 +112,9 @@ func (tr *Transport) dial(ctx context.Context, options DialOptions) (quic.Connec
 	if err != nil {
 		return nil, err
 	}
+	hash := sha256.New()
+	hash.Write(cert.Certificate[0])
+	log.Printf("client certificate hash: %02x", hash.Sum(nil))
 	addr, err := net.ResolveUDPAddr("udp", options.Address)
 	if err != nil {
 		return nil, err
@@ -140,16 +123,6 @@ func (tr *Transport) dial(ctx context.Context, options DialOptions) (quic.Connec
 		InsecureSkipVerify: true,
 		NextProtos:         []string{"devkit"},
 		Certificates:       []tls.Certificate{cert},
-		VerifyPeerCertificate: func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
-
-			for i, cert := range rawCerts {
-				hash := sha256.New()
-				hash.Write(cert)
-				log.Printf("<Transport.Dial> certificate: %d %2x", i, hash.Sum(nil))
-			}
-
-			return nil
-		},
 	}, &quic.Config{
 		KeepAlivePeriod: 25 * time.Second,
 		Allow0RTT:       true,
@@ -158,7 +131,6 @@ func (tr *Transport) dial(ctx context.Context, options DialOptions) (quic.Connec
 }
 
 func (tr *Transport) Dial(ctx context.Context, options DialOptions) (conn quic.Connection, err error) {
-	options.ApplyDefaults()
 	for i := 0; i < options.Retry; i++ {
 		if conn, err = tr.dial(ctx, options); err == nil && conn != nil {
 			break

@@ -1,7 +1,7 @@
 //go:build !windows
 // +build !windows
 
-package util
+package infra
 
 import (
 	"context"
@@ -31,6 +31,7 @@ func (up UnixPseudo) Close() (err error) {
 	up.proc.Wait()
 	return
 }
+
 func (up UnixPseudo) Resize(cols, rows int) error {
 	return pty.Setsize(up.file, &pty.Winsize{Cols: uint16(cols), Rows: uint16(rows)})
 }
