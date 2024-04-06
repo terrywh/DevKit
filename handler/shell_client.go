@@ -131,8 +131,6 @@ func (css *ClientShellHandler) splitSocket(ctx context.Context, c *websocket.Con
 }
 
 func (css *ClientShellHandler) serveShell(_ context.Context, e *entity.StartShell, s quic.Stream, r io.Reader, w io.Writer) (err error) {
-	e.ApplyDefaults()
-
 	if r == os.Stdin { // 对直接透传的 Shell 设定当前 Stdin 状态
 		state, _ := term.MakeRaw(int(os.Stdin.Fd()))
 		e.Cols, e.Rows, _ = term.GetSize(int(os.Stdin.Fd()))

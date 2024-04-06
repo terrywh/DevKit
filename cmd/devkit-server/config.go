@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"path/filepath"
 	"sync/atomic"
 
@@ -32,6 +33,7 @@ func (c *Config) Get() *ConfigPayload {
 }
 
 func (c *Config) Reload() {
+	log.Println("<Config.Reload> ", c.path)
 	cp := &ConfigPayload{}
 	app.UnmarshalConfig(c.path, cp)
 	c.payload.Swap(cp)
