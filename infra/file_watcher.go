@@ -26,7 +26,7 @@ func (cw *FileWatcher) Add(file FileToWatch) {
 }
 
 func (cw *FileWatcher) serve() {
-	log.Println("<ConfigWatcher.Serve> starting ...")
+	log.Println("<FileWatcher.Serve> starting ...")
 	ticker := time.NewTicker(3 * time.Second)
 	defer ticker.Stop()
 SERVING:
@@ -47,7 +47,7 @@ SERVING:
 			cw.change[e.Name] = time.Now().Add(2 * time.Second)
 		}
 	}
-	log.Println("<ConfigWatcher.Serve> closed.")
+	log.Println("<FileWatcher.Serve> closed.")
 }
 
 func (cw *FileWatcher) Close() (err error) {

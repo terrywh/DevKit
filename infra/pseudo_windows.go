@@ -49,6 +49,7 @@ func StartPty(ctx context.Context, rows, cols int, cmd string, args ...string) (
 	go func() {
 		wp.cpty.Wait(context.Background()) // 不调用 Wait 时，对 cpty 的 Read 不会停止
 		wp.exit = true
+		wp.Close()
 	}()
 	pty = wp
 	return
