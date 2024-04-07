@@ -40,7 +40,6 @@ SERVING:
 				}
 			}
 		case e := <-cw.watcher.Events:
-			log.Println(e.String())
 			if e.Op == 0 || e.Name == "" {
 				break SERVING
 			}

@@ -21,6 +21,7 @@ import (
 
 type ClientShellHandler struct {
 	HttpHandlerBase
+	StreamHandlerInvoker
 	mutex *sync.RWMutex
 	shell map[entity.ShellID]*entity.StartShell
 }
@@ -59,6 +60,16 @@ func (css *ClientShellHandler) del(e *entity.StartShell) {
 	delete(css.shell, e.ShellId)
 }
 
+func (css *ClientShellHandler) getShell(req *http.Request) (e *entity.StartShell) {
+	shell_id := entity.ShellID(req.PathValue("shell_id"))
+	defer func() {
+		delete(css.shell, shell_id)
+	}()
+
+	e = css.get(shell_id)
+	return
+}
+
 func (css *ClientShellHandler) HandleStart(rsp http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -79,14 +90,9 @@ func (css *ClientShellHandler) HandleStart(rsp http.ResponseWriter, req *http.Re
 func (css *ClientShellHandler) HandleSocket(rsp http.ResponseWriter, req *http.Request) {
 	ctx := context.Background()
 
-	shell_id := entity.ShellID(req.PathValue("shell_id"))
-	defer func() {
-		delete(css.shell, shell_id)
-	}()
-
-	e := css.get(shell_id)
+	e := css.getShell(req)
 	if e == nil {
-		log.Println("<ServiceHttpShell.HandleSocket> failed to find shell: ", shell_id)
+		log.Println("<ServiceHttpShell.HandleSocket> unable to find shell")
 		return
 	}
 	defer css.del(e)
@@ -146,7 +152,24 @@ func (css *ClientShellHandler) serveShell(_ context.Context, e *entity.StartShel
 }
 
 func (css *ClientShellHandler) HandleResize(rsp http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
 
+	e := css.getShell(req)
+	if e == nil {
+		log.Println("<ServiceHttpShell.HandleSocket> unable to find shell")
+		return
+	}
+	json.NewDecoder(req.Body).Decode(e)
+
+	rst, err := css.Invoke(ctx, e.DeviceId, "/shell/resize", e)
+	if err != nil {
+		css.Failure(rsp, err)
+	} else if rst.Error.Code > 0 {
+		css.Failure(rsp, rst.Error)
+	} else {
+		css.Success(rsp, nil)
+	}
 }
 
 func (css *ClientShellHandler) HandleRun(rsp http.ResponseWriter, req *http.Request) {

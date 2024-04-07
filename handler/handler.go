@@ -1,11 +1,15 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"io"
+	"log"
 	"net/http"
 
 	"github.com/terrywh/devkit/entity"
+	"github.com/terrywh/devkit/stream"
 )
 
 type HttpHandlerBase struct{}
@@ -73,4 +77,20 @@ func (StreamHandlerBase) Failure(w io.Writer, err error) {
 			},
 		})
 	}
+}
+
+type StreamHandlerInvoker struct{}
+
+func (shc StreamHandlerInvoker) Invoke(ctx context.Context, device_id entity.DeviceID, path string, req interface{}) (rsp entity.HttpResponse, err error) {
+	s, err := stream.DefaultSessionManager.AcquireStream(ctx, device_id)
+	if err != nil {
+		log.Println("<ServiceHttpShell.HandleSocket> failed to acquire stream: ", err)
+		return
+	}
+	fmt.Fprintf(s, "%s:", path)
+	if err = json.NewEncoder(s).Encode(req); err != nil {
+		return
+	}
+	err = json.NewDecoder(s).Decode(&rsp)
+	return
 }
