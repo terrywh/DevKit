@@ -62,13 +62,14 @@ func (mgr *DefaultSessionManager) EnsureConn(ctx context.Context, peer *entity.R
 		if err = mgr.resolver.Resolve(ctx, peer); err != nil {
 			return
 		}
+		log.Println("<DefaultSessionManager.EnsureConn> peer: ", peer.Address)
 	}
 	// 建立新会话
 	if conn, err = mgr.provider.Acquire(ctx, peer); err != nil {
 		return
 	}
 	mgr.conn[peer.DeviceID] = conn
-	go func() {
+	go func(conn quic.Connection) {
 		ctx := conn.Context()
 		log.Println("<SessionManager.Acquire> connection: ", &conn, " started ...")
 		// 监听链接持续时间
@@ -79,7 +80,7 @@ func (mgr *DefaultSessionManager) EnsureConn(ctx context.Context, peer *entity.R
 		defer mgr.mutex.Unlock()
 		delete(mgr.conn, peer.DeviceID)
 		conn.CloseWithError(quic.ApplicationErrorCode(0), "close")
-	}()
+	}(conn)
 	return conn, nil
 }
 

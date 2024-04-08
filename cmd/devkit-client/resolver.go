@@ -22,16 +22,15 @@ type ResolverCommand interface {
 func newResolver(options *stream.DialOptions) (r *Resolver) {
 	r = &Resolver{
 		command: make(chan ResolverCommand),
+		options: *options,
 	}
-	options.Retry = 3
-	options.Backoff = 1200 * time.Millisecond
-	r.options = *options
+	r.options.Retry = 3
+	r.options.Backoff = 1200 * time.Millisecond
 	return
 }
 
 func (r *Resolver) Serve(ctx context.Context) {
 	opts := r.options
-	opts.Retry = 3
 	var err error
 	var conn quic.Connection
 	peer := &entity.RemotePeer{

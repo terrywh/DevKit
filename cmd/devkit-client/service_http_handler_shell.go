@@ -62,7 +62,7 @@ func (css *ServiceHttpHandlerShell) del(e *entity.RemoteShell) {
 }
 
 func (css *ServiceHttpHandlerShell) HandleStart(rsp http.ResponseWriter, req *http.Request) {
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
 	defer cancel()
 
 	d := json.NewDecoder(req.Body)

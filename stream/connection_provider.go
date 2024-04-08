@@ -26,15 +26,15 @@ func newDefaultConnectionProvider(options *DialOptions) (dp *DefaultConnectionPr
 	if options.Address == "" {
 		panic("failed to create connection provider: address not provided")
 	}
-	if options.Backoff < time.Second {
-		options.Backoff = 2400 * time.Millisecond
-	}
-	if options.Retry == 0 {
-		options.Retry = 9
-	}
 	dp = &DefaultConnectionProvider{
 		options: *options,
 		cmd:     make(chan ConnectionProviderCommand),
+	}
+	if dp.options.Backoff < time.Second {
+		dp.options.Backoff = 2400 * time.Millisecond
+	}
+	if dp.options.Retry == 0 {
+		dp.options.Retry = 9
 	}
 	return dp
 }

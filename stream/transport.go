@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"log"
 	"net"
 	"time"
 
@@ -96,11 +97,13 @@ func (tr *Transport) dial(ctx context.Context, options *DialOptions) (conn quic.
 	if err = ctx.Err(); err != nil {
 		return
 	}
-	cert, err := tls.LoadX509KeyPair(options.Certificate, options.PrivateKey)
+	var cert tls.Certificate
+	cert, err = tls.LoadX509KeyPair(options.Certificate, options.PrivateKey)
 	if err != nil {
 		return nil, "", err
 	}
-	addr, err := net.ResolveUDPAddr("udp", options.Address)
+	var addr *net.UDPAddr
+	addr, err = net.ResolveUDPAddr("udp", options.Address)
 	if err != nil {
 		return nil, "", err
 	}
@@ -125,6 +128,7 @@ func (tr *Transport) Dial(ctx context.Context, options *DialOptions) (conn quic.
 		if err = ctx.Err(); err != nil {
 			break
 		}
+		log.Println("->", options.Address, i, "/", options.Retry)
 		if conn, device_id, err = tr.dial(ctx, options); err == nil && conn != nil {
 			break
 		}
