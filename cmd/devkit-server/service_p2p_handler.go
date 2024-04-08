@@ -27,7 +27,7 @@ func (handler *ServiceP2PHandler) HandleDial(ctx context.Context, ss *stream.Ses
 		handler.Respond(ss, err)
 		return
 	}
-	log.Println("<ServiceP2PHandler.HandleDial> dial: ", peer.DeviceID, " from: ", ss.RemotePeer().DeviceID)
+	log.Println("<ServiceP2PHandler.HandleDial> from: ", peer.DeviceID, peer.Address)
 	if !onAuthorize(peer.DeviceID) {
 		handler.Respond(ss, entity.ErrUnauthorized)
 		return
@@ -41,8 +41,9 @@ func (handler *ServiceP2PHandler) HandleDial(ctx context.Context, ss *stream.Ses
 			if ctx.Err() != nil {
 				break
 			}
-			time.Sleep(3 * time.Second)
+			log.Println(">>", peer.Address)
 			stream.DefaultTransport.WriteTo(data, addr)
+			time.Sleep(5 * time.Second)
 		}
 	}(ctx)
 }
