@@ -1,37 +1,48 @@
 package main
 
 import (
+	"crypto/tls"
 	"flag"
+	"log"
+	"path/filepath"
 
 	"github.com/terrywh/devkit/app"
 	"github.com/terrywh/devkit/infra"
 	"github.com/terrywh/devkit/stream"
 )
 
-var DefaultOption Option
-var DefaultConfig Config
+func OutputDeviceID() {
+	cert, err := tls.LoadX509KeyPair(DefaultConfig.Get().Client.Certificate,
+		DefaultConfig.Get().Client.PrivateKey)
+	if err != nil {
+		panic("failed to load certificate: " + err.Error())
+	}
+	log.Println("DeviceID: ", stream.DeviceIDFromCert(cert.Certificate[0]))
+}
 
 func main() {
 	fw := infra.NewFileWatcher()
 	defer fw.Close()
-	DefaultOption.init()
-	DefaultConfig.init(fw)
+	DefaultConfig.Init(filepath.Join(app.GetBaseDir(), "etc", "devkit.yaml"))
+	fw.Add(DefaultConfig)
 	flag.Parse()
 
+	OutputDeviceID()
+
 	stream.InitTransport(stream.TransportOptions{
-		LocalAddress: DefaultOption.addr,
+		LocalAddress: DefaultConfig.Get().Client.Address,
 	})
 	defer stream.DefaultTransport.Close()
 
-	stream.InitSessionManager(stream.NewDirectProvider(stream.DialOptions{
-		Certificate:         DefaultOption.cert,
-		PrivateKey:          DefaultOption.pkey,
+	sc := app.NewServiceController()
+	mgr := stream.NewSessionManager(stream.NewDefaultConnectionProvider(&stream.DialOptions{
+		Address:             DefaultConfig.Get().Registry.Address,
+		Certificate:         DefaultConfig.Get().Client.Certificate,
+		PrivateKey:          DefaultConfig.Get().Client.PrivateKey,
 		ApplicationProtocol: "devkit",
 	}))
-	defer stream.DefaultSessionManager.Close()
-
-	sc := app.NewServiceController()
-	sc.Start(newServiceHttp())
+	sc.Start(mgr)
+	sc.Start(newServiceHttp(mgr))
 	sc.WaitForSignal()
-	sc.Shutdown()
+	sc.Close()
 }

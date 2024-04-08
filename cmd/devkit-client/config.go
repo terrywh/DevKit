@@ -1,43 +1,38 @@
 package main
 
 import (
-	"log"
+	"flag"
 	"path/filepath"
-	"sync/atomic"
 
 	"github.com/terrywh/devkit/app"
-	"github.com/terrywh/devkit/infra"
 )
 
-type Config struct {
-	path    string
-	payload atomic.Pointer[ConfigPayload]
+var DefaultConfig *app.Config[ConfigPayload] = &app.Config[ConfigPayload]{}
+
+type ConfigPayloadRegistry struct {
+	Address string `yaml:"address"`
 }
 
-func (c *Config) init(fw *infra.FileWatcher) {
-	c.path, _ = filepath.Abs(filepath.Join(app.GetBaseDir(), "etc", "devkit.yaml"))
-	fw.Add(c)
-	c.Reload()
+type ConfigPayloadClient struct {
+	Address     string `yaml:"address"`
+	Certificate string `yaml:"certificate"`
+	PrivateKey  string `yaml:"private_key"`
 }
 
-func (c *Config) Path() string {
-	return c.path
-}
-
-func (c *Config) OnChange() {
-	c.Reload()
-}
-
-func (c *Config) Get() *ConfigPayload {
-	return c.payload.Load()
-}
-
-func (c *Config) Reload() {
-	log.Println("<Config.Reload> ", c.path)
-	cp := &ConfigPayload{}
-	app.UnmarshalConfig(c.path, cp)
-	c.payload.Swap(cp)
+type ConfigPayloadServer struct {
 }
 
 type ConfigPayload struct {
+	Registry ConfigPayloadRegistry `yaml:"registry"`
+	Client   ConfigPayloadClient   `yaml:"client"`
+	Server   ConfigPayloadServer   `yaml:"server"`
+}
+
+func (cp *ConfigPayload) InitFlag() {
+	flag.StringVar(&cp.Registry.Address, "registry.address", "42.193.117.122:18080", "注册呼叫服务")
+	flag.StringVar(&cp.Client.Address, "client.address", "127.0.0.1:18080", "客户及控制服务")
+	flag.StringVar(&cp.Client.Certificate, "client.certificate",
+		filepath.Join(app.GetBaseDir(), "var/cert/client.crt"), "连接认证证书公钥")
+	flag.StringVar(&cp.Client.PrivateKey, "client.private_key",
+		filepath.Join(app.GetBaseDir(), "var/cert/client.key"), "连接认证证书私钥")
 }

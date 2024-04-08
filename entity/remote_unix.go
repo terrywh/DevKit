@@ -3,7 +3,7 @@
 
 package entity
 
-func (o *StartShell) ApplyDefaults() {
+func (o *RemoteShell) ApplyDefaults() {
 	if len(o.ShellCmd) < 1 {
 		o.ShellCmd = []string{"bash"}
 	}

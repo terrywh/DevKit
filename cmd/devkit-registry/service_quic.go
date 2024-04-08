@@ -10,12 +10,15 @@ import (
 func newQuicService() (qs *stream.Server) {
 	var err error
 	mux := stream.NewServeMux()
+	tracker := newDiscoveryTracker()
 	qs, err = stream.NewServer(&stream.ServerOptions{
 		Handler: &stream.DefaultConnectionHandler{
 			Handler: mux,
-			Tracker: stream.NewDefaultConnectionTracker(),
+			Tracker: tracker,
 		},
-		Authorize:           onAuthorize,
+		Authorize: func(device_id entity.DeviceID) bool {
+			return true // 任何节点均可连接
+		},
 		Certificate:         DefaultConfig.Get().Server.Certificate,
 		PrivateKey:          DefaultConfig.Get().Server.PrivateKey,
 		ApplicationProtocol: "devkit",
@@ -23,15 +26,6 @@ func newQuicService() (qs *stream.Server) {
 	if err != nil {
 		panic(fmt.Sprint("failed to create server: ", err))
 	}
-	initServiceQuicShellHandler(mux)
-	return
-}
-
-func onAuthorize(hash entity.DeviceID) bool {
-	for _, auth := range DefaultConfig.Get().Server.Authorized {
-		if hash == entity.DeviceID(auth) {
-			return true
-		}
-	}
-	return false
+	initServiceQuicHandler(mux, tracker)
+	return qs
 }

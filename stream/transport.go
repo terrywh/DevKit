@@ -5,14 +5,19 @@ import (
 	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
-	"errors"
 	"fmt"
-	"log"
 	"net"
 	"time"
 
 	quic "github.com/quic-go/quic-go"
+	"github.com/terrywh/devkit/entity"
 )
+
+func DeviceIDFromCert(cert []byte) entity.DeviceID {
+	hash := sha256.New()
+	hash.Write(cert)
+	return entity.DeviceID(fmt.Sprintf("%02x", hash.Sum(nil)))
+}
 
 type TransportOptions struct {
 	LocalAddress string
@@ -32,10 +37,10 @@ func InitTransport(options TransportOptions) (tr *Transport, err error) {
 	}
 
 	if addr, err = net.ResolveUDPAddr("udp", options.LocalAddress); err != nil {
-		return
+		panic("failed to init transport: " + err.Error())
 	}
 	if conn, err = net.ListenUDP("udp", addr); err != nil {
-		return
+		panic("failed to init transport: " + err.Error())
 	}
 	tr = &Transport{
 		transport: &quic.Transport{
@@ -50,51 +55,31 @@ func (tr *Transport) LocalAddress() net.Addr {
 	return tr.transport.Conn.LocalAddr()
 }
 
-type ServerHandler interface {
-	ServeStream(ctx context.Context, s quic.Stream)
-}
-
-type ServerOptions struct {
-	Handler     ServerHandler
-	Authorize   func(device_id string) bool
-	Certificate string
-	PrivateKey  string
-
-	ApplicationProtocol string
-}
-
-var ErrUnauthorized error = errors.New("unauthorized")
-
-func (tr *Transport) CreateServer(options ServerOptions) (*Server, error) {
+func (tr *Transport) createListener(options *ServerOptions) (*quic.Listener, error) {
 	cert, err := tls.LoadX509KeyPair(options.Certificate, options.PrivateKey)
 	if err != nil {
 		return nil, err
 	}
-	l, err := tr.transport.Listen(&tls.Config{
+	return tr.transport.Listen(&tls.Config{
 		Certificates: []tls.Certificate{cert},
 		NextProtos:   []string{options.ApplicationProtocol},
 		ClientAuth:   tls.RequireAnyClientCert,
-		VerifyPeerCertificate: func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
+		VerifyPeerCertificate: func(certs [][]byte, chains [][]*x509.Certificate) error {
 
-			for _, cert := range rawCerts {
-				hash := sha256.New()
-				hash.Write(cert)
-				if options.Authorize(fmt.Sprintf("%02x", hash.Sum(nil))) {
+			for _, cert := range certs {
+				device_id := DeviceIDFromCert(cert)
+				if options.Authorize(device_id) {
 					return nil
 				}
 			}
 
-			return ErrUnauthorized
+			return entity.ErrUnauthorized
 		},
 	}, &quic.Config{
 		KeepAlivePeriod: 25 * time.Second,
 		Allow0RTT:       true,
 		EnableDatagrams: true,
 	})
-	if err != nil {
-		return nil, err
-	}
-	return newServer(l, options.Handler)
 }
 
 type DialOptions struct {
@@ -104,35 +89,37 @@ type DialOptions struct {
 
 	ApplicationProtocol string
 	Retry               int           // 默认 0 时，不做重试；当 Retry < 0 时无限重试
-	Backoff             time.Duration // 默认 3s 重试间隔
+	Backoff             time.Duration // 默认 2400ms 重试间隔
 }
 
-func (tr *Transport) dial(ctx context.Context, options DialOptions) (quic.Connection, error) {
+func (tr *Transport) dial(ctx context.Context, options DialOptions) (conn quic.Connection, device_id entity.DeviceID, err error) {
 	cert, err := tls.LoadX509KeyPair(options.Certificate, options.PrivateKey)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
-	hash := sha256.New()
-	hash.Write(cert.Certificate[0])
-	log.Printf("client certificate hash: %02x", hash.Sum(nil))
 	addr, err := net.ResolveUDPAddr("udp", options.Address)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
-	return tr.transport.Dial(ctx, addr, &tls.Config{
+	conn, err = tr.transport.Dial(ctx, addr, &tls.Config{
 		InsecureSkipVerify: true,
 		NextProtos:         []string{"devkit"},
 		Certificates:       []tls.Certificate{cert},
+		VerifyPeerCertificate: func(certs [][]byte, chain [][]*x509.Certificate) error {
+			device_id = DeviceIDFromCert(certs[0])
+			return nil
+		},
 	}, &quic.Config{
 		KeepAlivePeriod: 25 * time.Second,
 		Allow0RTT:       true,
 		EnableDatagrams: true,
 	})
+	return
 }
 
-func (tr *Transport) Dial(ctx context.Context, options DialOptions) (conn quic.Connection, err error) {
+func (tr *Transport) Dial(ctx context.Context, options DialOptions) (conn quic.Connection, device_id entity.DeviceID, err error) {
 	for i := 0; i < options.Retry; i++ {
-		if conn, err = tr.dial(ctx, options); err == nil && conn != nil {
+		if conn, device_id, err = tr.dial(ctx, options); err == nil && conn != nil {
 			break
 		}
 		time.Sleep(options.Backoff)
@@ -143,6 +130,11 @@ func (tr *Transport) Dial(ctx context.Context, options DialOptions) (conn quic.C
 func (tr *Transport) Close() (err error) {
 	if tr.transport != nil {
 		err = tr.transport.Close()
+		tr.transport = nil
 	}
 	return
+}
+
+func (tr *Transport) WriteTo(b []byte, a net.Addr) (int, error) {
+	return tr.transport.WriteTo(b, a)
 }

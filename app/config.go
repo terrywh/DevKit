@@ -2,8 +2,10 @@ package app
 
 import (
 	"errors"
+	"log"
 	"os"
 	"path/filepath"
+	"sync/atomic"
 
 	"gopkg.in/yaml.v3"
 )
@@ -41,4 +43,45 @@ func UnmarshalConfig(path string, v interface{}) (err error) {
 		err = ErrUnsupportedFileType
 	}
 	return
+}
+
+type ConfigWithFlag interface {
+	InitFlag()
+}
+
+type Config[T any] struct {
+	path    string
+	payload atomic.Pointer[T]
+}
+
+func (c *Config[T]) Init(path string) {
+	c.path = path
+	var v interface{}
+	v = new(T)
+	c.payload.Store(v.(*T))
+
+	c.Reload()           // 需要一个前置存储的数据基础进行复制、覆盖
+	v = c.payload.Load() // 从配置文件加载的配置
+	if cf, ok := v.(ConfigWithFlag); ok {
+		cf.InitFlag()
+	}
+}
+
+func (c *Config[T]) Path() string {
+	return c.path
+}
+
+func (c *Config[T]) OnChange() {
+	c.Reload()
+}
+
+func (c *Config[T]) Get() *T {
+	return c.payload.Load()
+}
+
+func (c *Config[T]) Reload() {
+	log.Println("<Config.Reload> ", c.path)
+	cp := *c.payload.Load()      // 保留当前值
+	UnmarshalConfig(c.path, &cp) // 覆盖
+	c.payload.Store(&cp)
 }

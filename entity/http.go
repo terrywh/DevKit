@@ -23,5 +23,9 @@ type HttpResponse struct {
 	Data  interface{} `json:"data"`
 }
 
+var ErrSuccess HttpError = HttpError{Code: 0, Info: ""}
 var ErrUnknown HttpError = HttpError{Code: 10000, Info: "unknown error"}
-var ErrShellNotFound HttpError = HttpError{Code: 10001, Info: "shell not found"}
+var ErrInvalidArguments HttpError = HttpError{Code: 10001, Info: "invalid arguments"}
+var ErrSessionNotFound HttpError = HttpError{Code: 10002, Info: "shell not found"}
+var ErrUnauthorized HttpError = HttpError{Code: 10003, Info: "unauthorized"}
+var ErrHandlerNotFound HttpError = HttpError{Code: 10004, Info: "handler not found"}

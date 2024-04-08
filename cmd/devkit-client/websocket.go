@@ -1,4 +1,4 @@
-package handler
+package main
 
 import (
 	"bytes"
@@ -7,14 +7,14 @@ import (
 	"nhooyr.io/websocket"
 )
 
-type WebSocketReader struct {
+type WebsocketReader struct {
 	ctx    context.Context
 	conn   *websocket.Conn
 	buffer *bytes.Buffer
 }
 
 // Read io.Reader
-func (wsr *WebSocketReader) Read(data []byte) (n int, err error) {
+func (wsr *WebsocketReader) Read(data []byte) (n int, err error) {
 	if wsr.buffer.Len() > 0 {
 		return wsr.buffer.Read(data)
 	}
@@ -29,12 +29,12 @@ func (wsr *WebSocketReader) Read(data []byte) (n int, err error) {
 	return wsr.buffer.Read(data)
 }
 
-type WebSocketWriteCloser struct {
+type WebsocketWriter struct {
 	ctx  context.Context
 	conn *websocket.Conn
 }
 
-func (wsr *WebSocketWriteCloser) Write(data []byte) (n int, err error) {
+func (wsr *WebsocketWriter) Write(data []byte) (n int, err error) {
 	err = wsr.conn.Write(wsr.ctx, websocket.MessageBinary, data)
 	if err == nil {
 		n = len(data)
@@ -42,6 +42,6 @@ func (wsr *WebSocketWriteCloser) Write(data []byte) (n int, err error) {
 	return
 }
 
-func (wsr *WebSocketWriteCloser) Close() error {
+func (wsr *WebsocketWriter) Close() error {
 	return wsr.conn.Close(websocket.StatusNormalClosure, "")
 }

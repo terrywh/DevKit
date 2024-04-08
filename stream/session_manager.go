@@ -9,62 +9,72 @@ import (
 	"github.com/terrywh/devkit/entity"
 )
 
-type SessionManager struct {
-	session  map[entity.DeviceID]*Session
+type SessionManager interface {
+	EnsureConn(ctx context.Context, peer *entity.RemotePeer) (conn quic.Connection, err error)
+	Acquire(ctx context.Context, peer *entity.RemotePeer) (stream *SessionStream, err error)
+	Serve(ctx context.Context)
+	Close() error
+}
+
+type DefaultSessionManager struct {
+	conn     map[entity.DeviceID]quic.Connection
 	mutex    *sync.Mutex
 	provider ConnectionProvider
 }
 
-var DefaultSessionManager *SessionManager
-
-func InitSessionManager(provider ConnectionProvider) (sm *SessionManager) {
-	sm = &SessionManager{
-		session:  make(map[entity.DeviceID]*Session),
+func NewSessionManager(provider ConnectionProvider) (mgr SessionManager) {
+	mgr = &DefaultSessionManager{
+		conn:     make(map[entity.DeviceID]quic.Connection),
 		mutex:    &sync.Mutex{},
 		provider: provider,
 	}
-	DefaultSessionManager = sm
 	return
 }
 
-func (s *SessionManager) Close() {
-	for _, session := range s.session {
-		session.Close()
-	}
+func (mgr *DefaultSessionManager) Serve(ctx context.Context) {
+	mgr.provider.Serve(ctx)
 }
 
-func (mgr *SessionManager) Acquire(ctx context.Context, device_id entity.DeviceID) (s *Session, err error) {
+func (mgr *DefaultSessionManager) Close() error {
+	for _, conn := range mgr.conn {
+		conn.CloseWithError(quic.ApplicationErrorCode(0), "close")
+	}
+	return nil
+}
+
+func (mgr *DefaultSessionManager) EnsureConn(ctx context.Context, peer *entity.RemotePeer) (conn quic.Connection, err error) {
 	mgr.mutex.Lock()
 	defer mgr.mutex.Unlock()
 	var ok bool
 	// 复用现有会话
-	if s, ok = mgr.session[device_id]; ok {
-		return s, nil
+	if conn, ok = mgr.conn[peer.DeviceID]; peer.DeviceID != "" && ok {
+		return conn, nil
 	}
-	s = &Session{}
 	// 建立新会话
-	if s.conn, err = mgr.provider.Acquire(ctx, device_id); err != nil {
+	if conn, err = mgr.provider.Acquire(ctx, peer); err != nil {
 		return
 	}
-	mgr.session[device_id] = s
+	mgr.conn[peer.DeviceID] = conn
 	go func() {
-		ctx := s.conn.Context()
-		log.Println("<SessionManager.Acquire> connection: ", &s.conn, " started ...")
+		ctx := conn.Context()
+		log.Println("<SessionManager.Acquire> connection: ", &conn, " started ...")
 		// 监听链接持续时间
 		<-ctx.Done()
-		log.Println("<SessionManager.Acquire> connection: ", &s.conn, " closed.")
+		log.Println("<SessionManager.Acquire> connection: ", &conn, " closed.")
+
 		mgr.mutex.Lock()
 		defer mgr.mutex.Unlock()
-		delete(mgr.session, device_id)
-		s.Close()
+		delete(mgr.conn, peer.DeviceID)
+		conn.CloseWithError(quic.ApplicationErrorCode(0), "close")
 	}()
-	return s, nil
+	return conn, nil
 }
 
-func (s *SessionManager) AcquireStream(ctx context.Context, device_id entity.DeviceID) (quic.Stream, error) {
-	session, err := s.Acquire(ctx, device_id)
+func (mgr *DefaultSessionManager) Acquire(ctx context.Context, peer *entity.RemotePeer) (ss *SessionStream, err error) {
+	var conn quic.Connection
+	conn, err = mgr.EnsureConn(ctx, peer)
 	if err != nil {
 		return nil, err
 	}
-	return session.conn.OpenStream()
+	return NewSessionStream(peer, conn)
 }
