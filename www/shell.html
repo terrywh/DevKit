@@ -62,14 +62,15 @@
                 return term;
             }
 
-            async function startShell(device_id) {
+            async function startShell(device_id, address) {
                 const rsp = await fetch("/shell/start", {
                     headers: {
                         "Content-Type": "application/json",
                     },
                     method: "POST",
                     body: JSON.stringify({
-                        "device_id": device_id,
+                        "device_id": device_id || "",
+                        "address": address || "",
                     }),
                 });
                 const payload = await rsp.json();
@@ -95,7 +96,7 @@
                 });
                 return promise;
             }
-            async function onResize(e) {
+            async function resize(session_id, e) {
                 const rsp = await fetch(`/shell/${session_id}/resize`, {
                     method: "POST",
                     headers: {
@@ -108,13 +109,22 @@
                 });
             }
 
-            const target = (new URLSearchParams(location.search)).get("target") || "127.0.0.1:18081";
-            const session_id = await startShell(target)
+            const query = new URLSearchParams(location.search);
+            const session_id = await startShell(query.get("device_id"), query.get("address"));
             const term = await createTerminal(session_id);
             const sock = await createSocket(session_id, term);
             term.loadAddon(new (AttachAddon.AttachAddon || AttachAddon)(sock));
-            term.onResize(onResize);
+            term.onResize(function(e) {
+                resize(session_id, e)
+            });
             term.fit();
+            let resizeTimeout;
+            window.addEventListener("resize", function(e) {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(function() {
+                    term.fit();
+                }, 300);
+            })
         </script>
     </body>
 </html>

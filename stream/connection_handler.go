@@ -3,7 +3,6 @@ package stream
 import (
 	"bufio"
 	"context"
-	"log"
 	"sync/atomic"
 
 	"github.com/quic-go/quic-go"
@@ -43,21 +42,14 @@ func (svr *DefaultConnectionHandler) ServeConn(ctx context.Context, conn quic.Co
 SERVING:
 	for {
 		s, err := conn.AcceptStream(ctx)
-		if ae, ok := err.(*quic.ApplicationError); ok && ae.ErrorCode == quic.ApplicationErrorCode(0) {
+		if err != nil {
 			break SERVING
-		} else if err != nil {
-			if _, ok := err.(*quic.ApplicationError); !ok {
-				log.Print("failed to accept stream: ", err)
-			}
-			return
 		}
-
 		go svr.Handler.ServeStream(context.Background(), &SessionStream{
-			peer: &entity.RemotePeer{DeviceID: device_id, Address: conn.RemoteAddr().String()},
+			peer: entity.RemotePeer{DeviceID: device_id, Address: conn.RemoteAddr().String()},
 			conn: conn, s: s, r: bufio.NewReader(s),
 		})
 	}
-
 	svr.leave(conn_id, device_id, conn)
 }
 

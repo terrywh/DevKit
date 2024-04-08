@@ -9,10 +9,6 @@ import (
 
 var DefaultConfig *app.Config[ConfigPayload] = &app.Config[ConfigPayload]{}
 
-type ConfigPayloadClient struct {
-	Address string `yaml:"address"`
-}
-
 type ConfigPayloadServer struct {
 	Address     string `yaml:"address"`
 	Certificate string `yaml:"certificate"`
@@ -20,16 +16,14 @@ type ConfigPayloadServer struct {
 }
 
 type ConfigPayload struct {
-	Client ConfigPayloadClient
 	Server ConfigPayloadServer
 }
 
 func (cp *ConfigPayload) InitFlag() {
-	flag.StringVar(&cp.Client.Address, "client.address", "127.0.0.1:18080", "serve web ui on this address")
-	flag.StringVar(&cp.Server.Address, "server.address", "0.0.0.0:18080", "serve QUIC stream on this address")
+	flag.StringVar(&cp.Server.Address, "server.address", "0.0.0.0:18080", "注册呼叫服务")
 	flag.StringVar(&cp.Server.Certificate, "server.certificate",
-		filepath.Join(app.GetBaseDir(), "var/cert/server.crt"), "certificate to use for QUIC (server only)")
+		filepath.Join(app.GetBaseDir(), "var/cert/server.crt"), "服务证书公钥")
 	flag.StringVar(&cp.Server.PrivateKey, "server.private_key",
-		filepath.Join(app.GetBaseDir(), "var/cert/server.key"), "private key to use for QUIC (server only)")
+		filepath.Join(app.GetBaseDir(), "var/cert/server.key"), "服务证书私钥")
 
 }

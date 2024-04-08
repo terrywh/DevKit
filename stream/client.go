@@ -30,15 +30,18 @@ func (cli *Client) Serve(ctx context.Context) {
 	var conn quic.Connection
 	// var device_id entity.DeviceID
 	var err error
-
+SERVING:
 	for {
-		conn /* device_id */, _, err = DefaultTransport.Dial(ctx, DialOptions{
+		conn /* device_id */, _, err = DefaultTransport.Dial(ctx, &DialOptions{
 			Address:     cli.options.Address, // TODO 公共 REGISTRY 服务
 			Certificate: cli.options.Certificate,
 			PrivateKey:  cli.options.PrivateKey,
 			Retry:       3,
 			Backoff:     1200 * time.Millisecond,
 		})
+		if ctx.Err() != nil {
+			break SERVING
+		}
 		if err != nil {
 			log.Println("<Client.Serve> failed to dial registry: ", err)
 			continue

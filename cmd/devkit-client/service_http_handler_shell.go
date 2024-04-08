@@ -62,7 +62,7 @@ func (css *ServiceHttpHandlerShell) del(e *entity.RemoteShell) {
 }
 
 func (css *ServiceHttpHandlerShell) HandleStart(rsp http.ResponseWriter, req *http.Request) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
 	d := json.NewDecoder(req.Body)
@@ -89,7 +89,7 @@ func (css *ServiceHttpHandlerShell) HandleSocket(rsp http.ResponseWriter, req *h
 	}
 	defer css.del(e)
 	// 确认对应会话通道
-	ss, err := css.mgr.Acquire(ctx, &entity.RemotePeer{DeviceID: e.DeviceID})
+	ss, err := css.mgr.Acquire(ctx, &e.RemotePeer)
 	if err != nil {
 		log.Println("<ServiceHttpShell.HandleSocket> failed to acquire stream: ", err)
 		return

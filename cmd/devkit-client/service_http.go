@@ -28,7 +28,12 @@ func newServiceHttp(mgr stream.SessionManager) (s *HttpService) {
 }
 
 func (s *HttpService) Serve(ctx context.Context) {
-	s.svr.ListenAndServe()
+	go s.svr.ListenAndServe()
+
+	<-ctx.Done()
+	shutdown, cancel := context.WithTimeout(context.Background(), 9*time.Second)
+	defer cancel()
+	s.svr.Shutdown(shutdown)
 }
 
 func (s *HttpService) Close() error {

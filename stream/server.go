@@ -39,7 +39,6 @@ SERVING:
 	for {
 		conn, err := svr.listener.Accept(ctx)
 		if err != nil {
-			log.Print(err)
 			break SERVING
 		}
 		go svr.handler.ServeConn(context.Background(), conn)

@@ -10,10 +10,8 @@ import (
 )
 
 func main() {
-	fw := infra.NewFileWatcher()
-	defer fw.Close()
 	DefaultConfig.Init(filepath.Join(app.GetBaseDir(), "etc", "devkit.yaml"))
-	fw.Add(DefaultConfig)
+
 	flag.Parse()
 
 	stream.InitTransport(stream.TransportOptions{
@@ -22,7 +20,12 @@ func main() {
 	defer stream.DefaultTransport.Close()
 
 	sc := app.NewServiceController()
+	fw := infra.NewFileWatcher()
+	fw.Add(DefaultConfig)
+	sc.Start(fw)
+
 	sc.Start(newQuicService())
+
 	sc.WaitForSignal()
 	sc.Close()
 }

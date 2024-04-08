@@ -1,6 +1,7 @@
 package infra
 
 import (
+	"context"
 	"log"
 	"time"
 
@@ -25,13 +26,15 @@ func (cw *FileWatcher) Add(file FileToWatch) {
 	cw.watcher.Add(path)
 }
 
-func (cw *FileWatcher) serve() {
+func (cw *FileWatcher) Serve(ctx context.Context) {
 	log.Println("<FileWatcher.Serve> starting ...")
 	ticker := time.NewTicker(3 * time.Second)
 	defer ticker.Stop()
 SERVING:
 	for {
 		select {
+		case <-ctx.Done():
+			break SERVING
 		case now := <-ticker.C:
 			for name, ct := range cw.change {
 				if ct.Before(now) {
@@ -46,6 +49,7 @@ SERVING:
 			cw.change[e.Name] = time.Now().Add(2 * time.Second)
 		}
 	}
+	cw.watcher.Close()
 	log.Println("<FileWatcher.Serve> closed.")
 }
 
@@ -60,6 +64,5 @@ func NewFileWatcher() (fw *FileWatcher) {
 	if fw.watcher, err = fsnotify.NewWatcher(); err != nil {
 		panic(err)
 	}
-	go fw.serve()
 	return
 }

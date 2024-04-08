@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"errors"
+	"log"
 	"os"
 	"os/signal"
 	"sync"
@@ -42,20 +43,23 @@ func (sc *ServiceController) Start(svc Service) {
 	go func() {
 		defer sc.wg.Done()
 		defer sr.cancel(nil)
-		svc.Serve(context.Background())
+		svc.Serve(sr.ctx)
 	}()
 }
 
 var ErrShutdown = errors.New("shutdown")
 
 func (sc *ServiceController) Close() error {
+	log.Println("<ServiceController.Close> shutdown ...")
 	for i := len(sc.running) - 1; i >= 0; i-- {
 		sr := sc.running[i]
 		sr.cancel(ErrShutdown)
 	}
-	done := make(chan bool)
+	// 自主结束超时后无人读取，估使用 BUFFERED CHANNEL 允许忽略
+	done := make(chan bool, 1)
 	go func() {
 		timeout := time.NewTimer(10 * time.Second)
+		timeout.Stop()
 		select { // 等待服务自然停止或超时
 		case <-done:
 		case <-timeout.C:

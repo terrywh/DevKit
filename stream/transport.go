@@ -92,7 +92,10 @@ type DialOptions struct {
 	Backoff             time.Duration // 默认 2400ms 重试间隔
 }
 
-func (tr *Transport) dial(ctx context.Context, options DialOptions) (conn quic.Connection, device_id entity.DeviceID, err error) {
+func (tr *Transport) dial(ctx context.Context, options *DialOptions) (conn quic.Connection, device_id entity.DeviceID, err error) {
+	if err = ctx.Err(); err != nil {
+		return
+	}
 	cert, err := tls.LoadX509KeyPair(options.Certificate, options.PrivateKey)
 	if err != nil {
 		return nil, "", err
@@ -117,8 +120,11 @@ func (tr *Transport) dial(ctx context.Context, options DialOptions) (conn quic.C
 	return
 }
 
-func (tr *Transport) Dial(ctx context.Context, options DialOptions) (conn quic.Connection, device_id entity.DeviceID, err error) {
+func (tr *Transport) Dial(ctx context.Context, options *DialOptions) (conn quic.Connection, device_id entity.DeviceID, err error) {
 	for i := 0; i < options.Retry; i++ {
+		if err = ctx.Err(); err != nil {
+			break
+		}
 		if conn, device_id, err = tr.dial(ctx, options); err == nil && conn != nil {
 			break
 		}

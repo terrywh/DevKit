@@ -35,8 +35,11 @@ func main() {
 	defer stream.DefaultTransport.Close()
 
 	sc := app.NewServiceController()
+	sc.Start(fw)
 	sc.Start(newQuicService())
-	sc.Start(newP2PService())
+	if DefaultConfig.Get().Registry.Address != "-" {
+		sc.Start(newP2PService())
+	}
 	sc.WaitForSignal()
 	sc.Close()
 }

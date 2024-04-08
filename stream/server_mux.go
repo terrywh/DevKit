@@ -38,9 +38,12 @@ func (mux ServeMux) HandleFunc(path string, fn func(ctx context.Context, ss *Ses
 
 func (mux ServeMux) ServeStream(ctx context.Context, ss *SessionStream) {
 	defer ss.Close()
+	if ctx.Err() != nil {
+		return
+	}
+
 	path, err := ss.r.ReadString(':')
 	if err != nil {
-		log.Print(err)
 		return
 	}
 	path = path[:len(path)-1]

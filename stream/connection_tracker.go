@@ -46,7 +46,7 @@ func (st *DefaultConnectionTracker) Close() error {
 	st.mutex.Lock()
 	defer st.mutex.Unlock()
 
-	log.Println("<ServerTrackerDefault.Close> connection close.")
+	log.Println("<ServerTrackerDefault.Close>")
 	for _, conn := range st.conn {
 		conn.CloseWithError(quic.ApplicationErrorCode(0), "close")
 	}

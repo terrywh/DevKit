@@ -20,22 +20,30 @@ type DefaultSessionManager struct {
 	conn     map[entity.DeviceID]quic.Connection
 	mutex    *sync.Mutex
 	provider ConnectionProvider
+	resolver Resolver
 }
 
-func NewSessionManager(provider ConnectionProvider) (mgr SessionManager) {
+type SessionManagerOptions struct {
+	DialOptions
+	Resolver Resolver // 默认为空时，不支持 P2P 寻址
+}
+
+func NewSessionManager(options *SessionManagerOptions) (mgr SessionManager) {
 	mgr = &DefaultSessionManager{
 		conn:     make(map[entity.DeviceID]quic.Connection),
 		mutex:    &sync.Mutex{},
-		provider: provider,
+		provider: newDefaultConnectionProvider(&options.DialOptions),
+		resolver: options.Resolver,
 	}
 	return
 }
 
 func (mgr *DefaultSessionManager) Serve(ctx context.Context) {
-	mgr.provider.Serve(ctx)
+	mgr.resolver.Serve(ctx)
 }
 
 func (mgr *DefaultSessionManager) Close() error {
+	mgr.resolver.Close()
 	for _, conn := range mgr.conn {
 		conn.CloseWithError(quic.ApplicationErrorCode(0), "close")
 	}
@@ -49,6 +57,11 @@ func (mgr *DefaultSessionManager) EnsureConn(ctx context.Context, peer *entity.R
 	// 复用现有会话
 	if conn, ok = mgr.conn[peer.DeviceID]; peer.DeviceID != "" && ok {
 		return conn, nil
+	}
+	if peer.Address == "" {
+		if err = mgr.resolver.Resolve(ctx, peer); err != nil {
+			return
+		}
 	}
 	// 建立新会话
 	if conn, err = mgr.provider.Acquire(ctx, peer); err != nil {

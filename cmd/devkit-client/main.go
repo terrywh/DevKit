@@ -35,12 +35,16 @@ func main() {
 	defer stream.DefaultTransport.Close()
 
 	sc := app.NewServiceController()
-	mgr := stream.NewSessionManager(stream.NewDefaultConnectionProvider(&stream.DialOptions{
+	opts := &stream.DialOptions{
 		Address:             DefaultConfig.Get().Registry.Address,
 		Certificate:         DefaultConfig.Get().Client.Certificate,
 		PrivateKey:          DefaultConfig.Get().Client.PrivateKey,
 		ApplicationProtocol: "devkit",
-	}))
+	}
+	mgr := stream.NewSessionManager(&stream.SessionManagerOptions{
+		DialOptions: *opts,
+		Resolver:    newResolver(opts),
+	})
 	sc.Start(mgr)
 	sc.Start(newServiceHttp(mgr))
 	sc.WaitForSignal()
