@@ -13,6 +13,7 @@
             import "/node_modules/xterm-addon-webgl/lib/xterm-addon-webgl.js";
             import "/node_modules/xterm-addon-fit/lib/xterm-addon-fit.js";
             import "/node_modules/xterm-addon-attach/lib/xterm-addon-attach.js";
+            import {setup} from "/echo.js";
 
             function createTerminal(session_id) {
                 const term = new Terminal({
@@ -113,7 +114,8 @@
             const session_id = await startShell(query.get("device_id"), query.get("address"));
             const term = await createTerminal(session_id);
             const sock = await createSocket(session_id, term);
-            term.loadAddon(new (AttachAddon.AttachAddon || AttachAddon)(sock));
+            // term.loadAddon(new (AttachAddon.AttachAddon || AttachAddon)(sock));
+
             term.onResize(function(e) {
                 resize(session_id, e)
             });
@@ -123,8 +125,10 @@
                 clearTimeout(resizeTimeout);
                 resizeTimeout = setTimeout(function() {
                     term.fit();
-                }, 300);
-            })
+                }, 240);
+            });
+
+            setup(term, sock);
         </script>
     </body>
 </html>
