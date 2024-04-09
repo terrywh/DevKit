@@ -18,7 +18,7 @@ type SessionManager interface {
 
 type DefaultSessionManager struct {
 	conn     map[entity.DeviceID]quic.Connection
-	mutex    *sync.Mutex
+	mutex    *sync.RWMutex
 	provider ConnectionProvider
 	resolver Resolver
 }
@@ -31,7 +31,7 @@ type SessionManagerOptions struct {
 func NewSessionManager(options *SessionManagerOptions) (mgr SessionManager) {
 	mgr = &DefaultSessionManager{
 		conn:     make(map[entity.DeviceID]quic.Connection),
-		mutex:    &sync.Mutex{},
+		mutex:    &sync.RWMutex{},
 		provider: newDefaultConnectionProvider(&options.DialOptions),
 		resolver: options.Resolver,
 	}
@@ -50,13 +50,35 @@ func (mgr *DefaultSessionManager) Close() error {
 	return nil
 }
 
-func (mgr *DefaultSessionManager) EnsureConn(ctx context.Context, peer *entity.RemotePeer) (conn quic.Connection, err error) {
+func (mgr *DefaultSessionManager) get(peer *entity.RemotePeer) (conn quic.Connection) {
+	mgr.mutex.RLock()
+	defer mgr.mutex.RUnlock()
+
+	if peer.DeviceID != "" {
+		conn = mgr.conn[peer.DeviceID]
+	}
+	return conn
+}
+func (mgr *DefaultSessionManager) put(peer *entity.RemotePeer, conn quic.Connection) {
 	mgr.mutex.Lock()
 	defer mgr.mutex.Unlock()
-	var ok bool
-	// 复用现有会话
-	if conn, ok = mgr.conn[peer.DeviceID]; peer.DeviceID != "" && ok {
-		return conn, nil
+
+	mgr.conn[peer.DeviceID] = conn
+}
+
+func (mgr *DefaultSessionManager) del(peer *entity.RemotePeer, conn quic.Connection) {
+	mgr.mutex.Lock()
+	defer mgr.mutex.Unlock()
+
+	c := mgr.conn[peer.DeviceID]
+	if c == conn {
+		delete(mgr.conn, peer.DeviceID)
+	}
+}
+
+func (mgr *DefaultSessionManager) EnsureConn(ctx context.Context, peer *entity.RemotePeer) (conn quic.Connection, err error) {
+	if conn = mgr.get(peer); conn != nil {
+		return
 	}
 	if peer.Address == "" {
 		if err = mgr.resolver.Resolve(ctx, peer); err != nil {
@@ -68,19 +90,17 @@ func (mgr *DefaultSessionManager) EnsureConn(ctx context.Context, peer *entity.R
 	if conn, err = mgr.provider.Acquire(ctx, peer); err != nil {
 		return
 	}
-	mgr.conn[peer.DeviceID] = conn
-	go func(conn quic.Connection) {
+	mgr.put(peer, conn)
+	go func(conn quic.Connection, peer entity.RemotePeer) {
 		ctx := conn.Context()
-		log.Println("<SessionManager.Acquire> connection: ", &conn, " started ...")
+		log.Println("<SessionManager.Acquire> connection: ", peer.DeviceID, peer.Address, " started ...")
 		// 监听链接持续时间
 		<-ctx.Done()
-		log.Println("<SessionManager.Acquire> connection: ", &conn, " closed.")
+		log.Println("<SessionManager.Acquire> connection: ", peer.DeviceID, peer.Address, " closed.")
 
-		mgr.mutex.Lock()
-		defer mgr.mutex.Unlock()
-		delete(mgr.conn, peer.DeviceID)
 		conn.CloseWithError(quic.ApplicationErrorCode(0), "close")
-	}(conn)
+		mgr.del(&peer, conn)
+	}(conn, *peer)
 	return conn, nil
 }
 

@@ -12,7 +12,7 @@
             import "/node_modules/xterm/lib/xterm.js";
             import "/node_modules/xterm-addon-webgl/lib/xterm-addon-webgl.js";
             import "/node_modules/xterm-addon-fit/lib/xterm-addon-fit.js";
-            import "/node_modules/xterm-addon-attach/lib/xterm-addon-attach.js";
+            import "/node_modules/xterm-addon-web-links/lib/xterm-addon-web-links.js";
             import {setup} from "/echo.js";
 
             function createTerminal(session_id) {
@@ -54,7 +54,7 @@
                 const addonFit = new (FitAddon.FitAddon || FitAddon)();
                 term.loadAddon(addonFit);
                 term.loadAddon(new (WebglAddon.WebglAddon || WebglAddon)());
-
+                term.loadAddon(new (WebLinksAddon.WebLinksAddon || WebLinksAddon)());
                 term.open(document.getElementById("term"));
                 term.focus();
                 term.fit = function() {
@@ -114,8 +114,7 @@
             const session_id = await startShell(query.get("device_id"), query.get("address"));
             const term = await createTerminal(session_id);
             const sock = await createSocket(session_id, term);
-            // term.loadAddon(new (AttachAddon.AttachAddon || AttachAddon)(sock));
-
+            
             term.onResize(function(e) {
                 resize(session_id, e)
             });
