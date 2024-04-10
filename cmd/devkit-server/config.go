@@ -1,10 +1,13 @@
 package main
 
 import (
+	"crypto/tls"
 	"flag"
 	"path/filepath"
 
 	"github.com/terrywh/devkit/app"
+	"github.com/terrywh/devkit/entity"
+	"github.com/terrywh/devkit/stream"
 	"github.com/terrywh/devkit/util"
 )
 
@@ -29,6 +32,7 @@ type ConfigPayload struct {
 	Registry ConfigPayloadRegistry `yaml:"registry"`
 	Client   ConfigPayloadClient   `yaml:"client"`
 	Server   ConfigPayloadServer   `yaml:"server"`
+	deviceID entity.DeviceID
 }
 
 func (cp *ConfigPayload) InitFlag() {
@@ -41,4 +45,17 @@ func (cp *ConfigPayload) InitFlag() {
 		filepath.Join(app.GetBaseDir(), "var/cert/server.key"), "服务证书私钥")
 	flag.Var(&cp.Server.Authorized, "server.authorized", "认证客户端")
 
+}
+
+func (cp *ConfigPayload) DeviceID() entity.DeviceID {
+	if len(cp.deviceID) > 0 {
+		return cp.deviceID
+	}
+
+	cert, err := tls.LoadX509KeyPair(cp.Server.Certificate, cp.Server.PrivateKey)
+	if err != nil {
+		panic("failed to load certificate: " + err.Error())
+	}
+	cp.deviceID = stream.DeviceIDFromCert(cert.Certificate[0])
+	return cp.deviceID
 }

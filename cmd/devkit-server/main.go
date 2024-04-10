@@ -1,7 +1,6 @@
 package main
 
 import (
-	"crypto/tls"
 	"flag"
 	"log"
 	"path/filepath"
@@ -11,15 +10,6 @@ import (
 	"github.com/terrywh/devkit/stream"
 )
 
-func OutputDeviceID() {
-	cert, err := tls.LoadX509KeyPair(DefaultConfig.Get().Server.Certificate,
-		DefaultConfig.Get().Server.PrivateKey)
-	if err != nil {
-		panic("failed to load certificate: " + err.Error())
-	}
-	log.Println("DeviceID: ", stream.DeviceIDFromCert(cert.Certificate[0]))
-}
-
 func main() {
 	fw := infra.NewFileWatcher()
 	defer fw.Close()
@@ -27,7 +17,7 @@ func main() {
 	fw.Add(DefaultConfig)
 	flag.Parse()
 
-	OutputDeviceID()
+	log.Println("DeviceID: ", DefaultConfig.Get().DeviceID())
 
 	stream.InitTransport(stream.TransportOptions{
 		LocalAddress: DefaultConfig.Get().Server.Address,

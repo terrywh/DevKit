@@ -23,7 +23,8 @@ func newQuicService() (qs *stream.Server) {
 	if err != nil {
 		panic(fmt.Sprint("failed to create server: ", err))
 	}
-	initServiceQuicShellHandler(mux)
+	initShellHandler(mux)
+	initDeviceHandler(mux)
 	return
 }
 

@@ -77,9 +77,10 @@ func (tr *Transport) createListener(options *ServerOptions) (*quic.Listener, err
 			return entity.ErrUnauthorized
 		},
 	}, &quic.Config{
-		KeepAlivePeriod: 25 * time.Second,
-		Allow0RTT:       true,
-		EnableDatagrams: true,
+		HandshakeIdleTimeout: 10 * time.Second,
+		KeepAlivePeriod:      25 * time.Second,
+		Allow0RTT:            true,
+		EnableDatagrams:      true,
 	})
 }
 
@@ -116,9 +117,10 @@ func (tr *Transport) dial(ctx context.Context, options *DialOptions) (conn quic.
 			return nil
 		},
 	}, &quic.Config{
-		KeepAlivePeriod: 25 * time.Second,
-		Allow0RTT:       true,
-		EnableDatagrams: true,
+		HandshakeIdleTimeout: 10 * time.Second,
+		KeepAlivePeriod:      25 * time.Second,
+		Allow0RTT:            true,
+		EnableDatagrams:      true,
 	})
 	return
 }

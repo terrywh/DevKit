@@ -24,7 +24,7 @@ type ServerShell struct {
 	cpty infra.Pseudo `json:"-"`
 }
 
-func initServiceQuicShellHandler(mux *stream.ServeMux) {
+func initShellHandler(mux *stream.ServeMux) {
 	handler := &ServiceQuicHandlerShell{
 		start: make(map[entity.ShellID]*ServerShell),
 		mutex: &sync.RWMutex{},

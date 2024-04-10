@@ -21,7 +21,7 @@ type SessionManager interface {
 func newServiceHttp(mgr stream.SessionManager) (s *HttpService) {
 	s = &HttpService{mux: http.NewServeMux()}
 	s.svr = http.Server{Addr: DefaultConfig.Get().Client.Address, Handler: s.mux}
-	newClientShellHandler(mgr, s.mux)
+	newShellHandler(mgr, s.mux)
 	s.mux.Handle("/node_modules/", http.FileServer(http.Dir(".")))
 	s.mux.Handle("/", http.FileServer(http.Dir("www")))
 	return

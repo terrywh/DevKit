@@ -18,6 +18,7 @@ require (
 	github.com/webview/webview_go v0.0.0-20240220051247-56f456ca3a43
 	golang.org/x/crypto v0.17.0
 	golang.org/x/net v0.19.0
+	golang.org/x/sys v0.15.0
 	golang.org/x/term v0.15.0
 	gopkg.in/yaml.v3 v3.0.1
 	nhooyr.io/websocket v1.8.10
@@ -58,7 +59,6 @@ require (
 	golang.org/x/exp v0.0.0-20221205204356-47842c84f3db // indirect
 	golang.org/x/image v0.14.0 // indirect
 	golang.org/x/mod v0.11.0 // indirect
-	golang.org/x/sys v0.15.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/tools v0.9.1 // indirect
 )
