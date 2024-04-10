@@ -41,12 +41,17 @@ func main() {
 		PrivateKey:          DefaultConfig.Get().Client.PrivateKey,
 		ApplicationProtocol: "devkit",
 	}
+	mux := stream.NewServeMux()
 	mgr := stream.NewSessionManager(&stream.SessionManagerOptions{
 		DialOptions: *opts,
 		Resolver:    newResolver(opts),
+		Handler: &stream.DefaultConnectionHandler{
+			Tracker: stream.NewDefaultConnectionTracker(),
+			Handler: mux,
+		},
 	})
 	sc.Start(mgr)
-	sc.Start(newServiceHttp(mgr))
+	sc.Start(newServiceHttp(mgr, mux))
 	sc.WaitForSignal()
 	sc.Close()
 }

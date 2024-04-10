@@ -9,7 +9,6 @@ import (
 	"github.com/terrywh/devkit/app"
 	"github.com/terrywh/devkit/entity"
 	"github.com/terrywh/devkit/stream"
-	"golang.org/x/sys/windows"
 )
 
 type DeviceHandler struct {
@@ -21,7 +20,7 @@ type DeviceHandler struct {
 
 func initDeviceHandler(mux *stream.ServeMux) *DeviceHandler {
 	handler := &DeviceHandler{}
-	handler.major, handler.minor, handler.build = windows.RtlGetNtVersionNumbers()
+	handler.major, handler.minor, handler.build = handler.initDeviceVersion()
 	mux.HandleFunc("/device/query", handler.HandleQuery)
 	// TODO cleanup
 	return handler
