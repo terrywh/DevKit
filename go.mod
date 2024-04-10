@@ -11,6 +11,7 @@ require (
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/getlantern/systray v1.2.2
 	github.com/google/uuid v1.6.0
+	github.com/ncruces/zenity v0.10.12
 	github.com/quic-go/quic-go v0.42.0
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.830
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/tke v1.0.830
@@ -18,7 +19,7 @@ require (
 	github.com/webview/webview_go v0.0.0-20240220051247-56f456ca3a43
 	golang.org/x/crypto v0.17.0
 	golang.org/x/net v0.19.0
-	golang.org/x/sys v0.15.0
+	golang.org/x/sys v0.17.0
 	golang.org/x/term v0.15.0
 	gopkg.in/yaml.v3 v3.0.1
 	nhooyr.io/websocket v1.8.10
@@ -44,7 +45,6 @@ require (
 	github.com/klauspost/compress v1.17.4 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/ncruces/zenity v0.10.10 // indirect
 	github.com/onsi/ginkgo/v2 v2.9.5 // indirect
 	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c // indirect
 	github.com/randall77/makefat v0.0.0-20210315173500-7ddd0e42c844 // indirect
@@ -57,8 +57,8 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.26.0 // indirect
 	golang.org/x/exp v0.0.0-20221205204356-47842c84f3db // indirect
-	golang.org/x/image v0.14.0 // indirect
-	golang.org/x/mod v0.11.0 // indirect
+	golang.org/x/image v0.15.0 // indirect
+	golang.org/x/mod v0.12.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
-	golang.org/x/tools v0.9.1 // indirect
+	golang.org/x/tools v0.12.0 // indirect
 )

@@ -29,3 +29,4 @@ var ErrInvalidArguments HttpError = HttpError{Code: 10001, Info: "invalid argume
 var ErrSessionNotFound HttpError = HttpError{Code: 10002, Info: "shell not found"}
 var ErrUnauthorized HttpError = HttpError{Code: 10003, Info: "unauthorized"}
 var ErrHandlerNotFound HttpError = HttpError{Code: 10004, Info: "handler not found"}
+var ErrFileCorrupted HttpError = HttpError{Code: 10005, Info: "file corrupted"}

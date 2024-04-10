@@ -12,16 +12,16 @@ import (
 )
 
 type SessionStream struct {
-	peer entity.RemotePeer
-	conn quic.Connection
+	Peer entity.RemotePeer
+	Conn quic.Connection
 	s    quic.Stream
 	r    *bufio.Reader
 }
 
 func NewSessionStream(peer *entity.RemotePeer, conn quic.Connection) (ss *SessionStream, err error) {
 	ss = &SessionStream{
-		peer: *peer,
-		conn: conn,
+		Peer: *peer,
+		Conn: conn,
 	}
 	if ss.s, err = conn.OpenStream(); err != nil {
 		return
@@ -43,11 +43,11 @@ func (ss *SessionStream) Write(data []byte) (int, error) {
 }
 
 func (ss *SessionStream) RemoteAddr() net.Addr {
-	return ss.conn.RemoteAddr()
+	return ss.Conn.RemoteAddr()
 }
 
 func (ss *SessionStream) RemotePeer() *entity.RemotePeer {
-	return &ss.peer
+	return &ss.Peer
 }
 
 func (ss *SessionStream) CloseRead() {
@@ -62,18 +62,35 @@ func (ss *SessionStream) Invoke(ctx context.Context, path string,
 	req interface{}, rsp interface{}) (err error) {
 	defer ss.Close()
 
-	fmt.Fprintf(ss, "%s:", path)
-	if err = json.NewEncoder(ss).Encode(req); err != nil {
+	if _, err = fmt.Fprintf(ss, "%s:", path); err != nil {
+		return
+	}
+	if err = ss.Push(req); err != nil {
 		return
 	}
 	r := entity.HttpResponse{Data: rsp}
-	err = json.NewDecoder(ss).Decode(&r)
-	if err != nil {
+	// Decoder 可能读取了更后面的内容，可以使用（响应内容已结束）
+	// err = json.NewDecoder(ss).Decode(&r)
+	if err = ss.Pull(&r); err != nil {
 		return
 	}
+
 	if r.Error.Code > 0 {
 		err = r.Error
 		return
 	}
 	return nil
+}
+
+func (ss *SessionStream) Push(r interface{}) (err error) {
+	return json.NewEncoder(ss).Encode(r)
+}
+
+func (ss *SessionStream) Pull(r interface{}) (err error) {
+	var payload []byte
+	if payload, err = ss.r.ReadBytes(byte('\n')); err != nil {
+		return
+	}
+	err = json.Unmarshal(payload, r)
+	return
 }

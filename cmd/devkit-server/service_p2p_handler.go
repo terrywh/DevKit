@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 	"net"
 	"time"
@@ -21,18 +20,18 @@ func initServiceP2PHandler(mux *stream.ServeMux) {
 	mux.HandleFunc("/registry/dial", handler.HandleDial)
 }
 
-func (handler *ServiceP2PHandler) HandleDial(ctx context.Context, ss *stream.SessionStream) {
+func (handler *ServiceP2PHandler) HandleDial(ctx context.Context, src *stream.SessionStream) {
 	peer := entity.RemotePeer{}
-	if err := json.NewDecoder(ss).Decode(&peer); err != nil {
-		handler.Respond(ss, err)
+	if err := src.Pull(&peer); err != nil {
+		handler.Respond(src, err)
 		return
 	}
 	log.Println("<ServiceP2PHandler.HandleDial> from: ", peer.DeviceID, peer.Address)
 	if !onAuthorize(peer.DeviceID) {
-		handler.Respond(ss, entity.ErrUnauthorized)
+		handler.Respond(src, entity.ErrUnauthorized)
 		return
 	}
-	handler.Respond(ss, nil)
+	handler.Respond(src, nil)
 
 	go func(ctx context.Context) {
 		data := []byte(peer.DeviceID)

@@ -32,6 +32,10 @@ func (up UnixPseudo) Close() (err error) {
 	return
 }
 
+func (up UnixPseudo) Pid() int {
+	return up.proc.Process.Pid
+}
+
 func (up UnixPseudo) Resize(cols, rows int) error {
 	return pty.Setsize(up.file, &pty.Winsize{Cols: uint16(cols), Rows: uint16(rows)})
 }

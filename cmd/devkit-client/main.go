@@ -50,6 +50,7 @@ func main() {
 			Handler: mux,
 		},
 	})
+	initFileHandler(mgr, mux)
 	sc.Start(mgr)
 	sc.Start(newServiceHttp(mgr, mux))
 	sc.WaitForSignal()

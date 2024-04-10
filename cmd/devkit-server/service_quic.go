@@ -25,6 +25,7 @@ func newQuicService() (qs *stream.Server) {
 	}
 	initShellHandler(mux)
 	initDeviceHandler(mux)
+	initQuicFileHandler(mux)
 	return
 }
 

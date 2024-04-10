@@ -11,11 +11,6 @@ import (
 	"path/filepath"
 )
 
-type StreamFile struct {
-	Path string `json:"path"`
-	Size int64  `json:"size"`
-	Perm uint32 `json:"perm"`
-}
 
 func (s *StreamFile) ApplyDefaults() {}
 

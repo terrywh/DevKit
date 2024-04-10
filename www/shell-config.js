@@ -39,7 +39,7 @@ class echo {
         const dx = this.px - this.term.buffer.active.cursorX;
         const dy = this.py - (this.term.buffer.active.baseY + this.term.buffer.active.cursorY);
         console.log(dx, dy);
-        // move(this.term, dx, dy);
+        move(this.term, dx, dy);
         this.px = -1;
         this.py = -1;
     }

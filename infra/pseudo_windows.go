@@ -45,6 +45,10 @@ func (wp *WindowsPseudo) Resize(cols, rows int) error {
 	return wp.cpty.Resize(cols, rows)
 }
 
+func (wp *WindowsPseudo) Pid() int {
+	return 0
+}
+
 func StartPty(ctx context.Context, rows, cols int, cmd string, args ...string) (pty Pseudo, err error) {
 	wp := &WindowsPseudo{
 		mutex: &sync.Mutex{},

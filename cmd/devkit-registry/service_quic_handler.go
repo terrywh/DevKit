@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 
 	"github.com/quic-go/quic-go"
@@ -25,21 +24,24 @@ type ServiceQuicHandler struct {
 	tracker ConnectionTracker
 }
 
-func (handler *ServiceQuicHandler) HandleDial(ctx context.Context, ss *stream.SessionStream) {
-	server := &entity.RemotePeer{}
-	json.NewDecoder(ss).Decode(server)
-	log.Println("<ServiceQuicHandler.HandleDial> server: ", server.DeviceID, " client: ", ss.RemotePeer().DeviceID)
+func (handler *ServiceQuicHandler) HandleDial(ctx context.Context, src *stream.SessionStream) {
+	server := entity.RemotePeer{}
+	if err := src.Pull(&server); err != nil {
+		handler.Respond(src, err)
+		return
+	}
+	log.Println("<ServiceQuicHandler.HandleDial> server: ", server.DeviceID, " client: ", src.RemotePeer().DeviceID)
 
-	client := ss.RemotePeer()
+	client := src.RemotePeer()
 	// P2P 建连：
 	// 1. 要求 SERVER 向本测 CLIENT (ss.RemoteAddress()) 发送数据包打洞
-	err := handler.dial1RelayToServer(ctx, server, client)
+	err := handler.dial1RelayToServer(ctx, &server, client)
 	if err != nil {
-		handler.Respond(ss, err)
+		handler.Respond(src, err)
 		return
 	}
 	// 2. 本地 CLIENT 向远端 SERVER (conn.RemoteAddr()) 建连
-	handler.Respond(ss, server)
+	handler.Respond(src, server)
 }
 
 func (handler *ServiceQuicHandler) dial1RelayToServer(ctx context.Context, server *entity.RemotePeer, client *entity.RemotePeer) (err error) {

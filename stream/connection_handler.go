@@ -46,8 +46,8 @@ SERVING:
 			break SERVING
 		}
 		go svr.Handler.ServeStream(context.Background(), &SessionStream{
-			peer: entity.RemotePeer{DeviceID: device_id, Address: conn.RemoteAddr().String()},
-			conn: conn, s: s, r: bufio.NewReader(s),
+			Peer: entity.RemotePeer{DeviceID: device_id, Address: conn.RemoteAddr().String()},
+			Conn: conn, s: s, r: bufio.NewReader(s),
 		})
 	}
 	svr.leave(conn_id, device_id, conn)

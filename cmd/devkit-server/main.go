@@ -27,6 +27,7 @@ func main() {
 	sc := app.NewServiceController()
 	sc.Start(fw)
 	sc.Start(newQuicService())
+	sc.Start(newHttpService())
 	if DefaultConfig.Get().Registry.Address != "-" {
 		sc.Start(newP2PService())
 	}
