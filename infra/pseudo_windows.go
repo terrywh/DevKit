@@ -7,13 +7,15 @@ import (
 	"context"
 	"io"
 	"strings"
+	"sync"
 
 	"github.com/UserExistsError/conpty"
 )
 
 type WindowsPseudo struct {
-	cpty *conpty.ConPty
-	exit bool
+	mutex *sync.Mutex
+	cpty  *conpty.ConPty
+	exit  bool
 }
 
 func (wp *WindowsPseudo) Read(recv []byte) (int, error) {
@@ -28,6 +30,10 @@ func (wp *WindowsPseudo) Write(data []byte) (int, error) {
 }
 
 func (wp *WindowsPseudo) Close() (err error) {
+	wp.mutex.Lock()
+	defer wp.mutex.Unlock()
+
+	wp.exit = true
 	if wp.cpty != nil {
 		err = wp.cpty.Close()
 		wp.cpty = nil
@@ -40,7 +46,9 @@ func (wp *WindowsPseudo) Resize(cols, rows int) error {
 }
 
 func StartPty(ctx context.Context, rows, cols int, cmd string, args ...string) (pty Pseudo, err error) {
-	wp := &WindowsPseudo{}
+	wp := &WindowsPseudo{
+		mutex: &sync.Mutex{},
+	}
 	wp.cpty, err = conpty.Start(strings.Join([]string{cmd, strings.Join(args, " ")}, " "),
 		conpty.ConPtyDimensions(cols, rows))
 	if err != nil {
@@ -48,7 +56,6 @@ func StartPty(ctx context.Context, rows, cols int, cmd string, args ...string) (
 	}
 	go func() {
 		wp.cpty.Wait(context.Background()) // 不调用 Wait 时，对 cpty 的 Read 不会停止
-		wp.exit = true
 		wp.Close()
 	}()
 	pty = wp
