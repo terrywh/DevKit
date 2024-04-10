@@ -3,58 +3,35 @@
     <head>
         <link href="/node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
         <link href="/node_modules/bootstrap-icons/font/bootstrap-icons.min.css" rel="stylesheet">
-        <link href="/node_modules/xterm/css/xterm.css" rel="stylesheet">
+        <link href="/node_modules/@xterm/xterm/css/xterm.css" rel="stylesheet">
         <link rel="icon" type="image/png" href="/shell/shell.png" />
     </head>
     <body style="width: 100%; height: 100%;">
         <div id="term" style="width: 100%; height: 100%;"></div>
         <script type="module">
-            import "/node_modules/xterm/lib/xterm.js";
-            import "/node_modules/xterm-addon-webgl/lib/xterm-addon-webgl.js";
-            import "/node_modules/xterm-addon-fit/lib/xterm-addon-fit.js";
-            import "/node_modules/xterm-addon-web-links/lib/xterm-addon-web-links.js";
-            import {setup} from "/echo.js";
+            import "/node_modules/@xterm/xterm/lib/xterm.js";
+            import "/node_modules/@xterm/addon-webgl/lib/addon-webgl.js";
+            import "/node_modules/@xterm/addon-fit/lib/addon-fit.js";
+            import "/node_modules/@xterm/addon-web-links/lib/addon-web-links.js";
+            import {connect, theme} from "/shell-config.js";
 
             function createTerminal(shell) {
-                const term = new Terminal({
-                    theme: {
-                        foreground: "#c5c8c6",
-                        background: "#161719",
-                        cursor: "#d0d0d0",
-
-                        black: "#000000",
-                        brightBlack: "#000000",
-
-                        red: "#fd5ff1",
-                        brightRed: "#fd5ff1",
-
-                        green: "#87c38a",
-                        brightGreen: "#94fa36",
-
-                        yellow: "#ffd7b1",
-                        brightYellow: "#f5ffa8",
-
-                        blue: "#85befd",
-                        brightBlue: "#96cbfe",
-
-                        magenta: "#b9b6fc",
-                        brightMagenta: "#b9b6fc",
-
-                        cyan: "#85befd",
-                        brightCyan: "#85befd",
-
-                        white: "#e0e0e0",
-                        brightWhite: "#e0e0e0",
-                    },
+                const options = {
+                    theme: theme,
                     cursorStyle: "bar",
                     fontFamily: "Intel One Mono",
                     fontSize: 16,
                     lineHeight: 1.2,
-                    windowPty: {
-                        backend: "conpty",
-                        buildNumber: shell.version.split(".").pop(),
-                    },
-                });
+                };
+                
+                if (shell.system == "windows") {
+                    const build = parseInt(shell.version.split(".").pop());
+                    options.windowsPty = { // 实际的 devkit-server 实现目前仅支持 conpty 形态
+                        backend: build > 18309 ? "conpty" : "winpty",
+                        buildNumber: build,
+                    }
+                }
+                const term = new Terminal(options);
                 const addonFit = new (FitAddon.FitAddon || FitAddon)();
                 term.loadAddon(addonFit);
                 term.loadAddon(new (WebglAddon.WebglAddon || WebglAddon)());
@@ -67,24 +44,32 @@
                 return term;
             }
 
-            async function prepareShell(device_id, address) {
-                const rsp = await fetch("/shell/start", {
+            async function prepareShell(query) {
+                const shell_cmd = query.get("shell_cmd")
+                const shell = {
+                    device_id: query.get("device_id") || null,
+                    address: query.get("address") || null,
+                    shell_cmd: shell_cmd ? shell_cmd.split(" ") : null,
+                }
+                
+                const rsp = await fetch("/shell/prepare", {
                     headers: {
                         "Content-Type": "application/json",
                     },
                     method: "POST",
                     body: JSON.stringify({
-                        "device_id": device_id || "",
-                        "address": address || "",
+                        "device_id": shell.device_id,
+                        "address": shell.address,
+                        "shell_cmd": shell.shell_cmd,
                     }),
                 });
                 const payload = await rsp.json();
-                if (payload.error && payload.error.code > 0) throw Error(`failed to start shell: ${payload.error.info}`);
+                if (payload.error && payload.error.code > 0) throw Error(`failed to prepare shell: ${payload.error.info}`);
                 return payload.data
             }
             
-            function createSocket(shell_id, term) {
-                const sock = new WebSocket(`ws://${location.host}/shell/${shell_id}/socket`, "shell");
+            function createSocket(shell, term) {
+                const sock = new WebSocket(`ws://${location.host}/shell/${shell.shell_id}/socket`, "shell");
                 sock.binaryType = "arraybuffer";
                 // 由 TrzszAddon 接管 stream 与 Terminal 间数据交换
                 const promise = new Promise((resolve) => {
@@ -113,9 +98,9 @@
                     }),
                 });
             }
-
+            
             const query = new URLSearchParams(location.search);
-            const shell = await prepareShell(query.get("device_id"), query.get("address"));
+            const shell = await prepareShell(query);
             const term = await createTerminal(shell);
             const sock = await createSocket(shell, term);
             
@@ -131,7 +116,7 @@
                 }, 240);
             });
 
-            setup(term, sock);
+            connect(term, sock);
         </script>
     </body>
 </html>

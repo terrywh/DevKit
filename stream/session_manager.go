@@ -21,11 +21,13 @@ type DefaultSessionManager struct {
 	mutex    *sync.RWMutex
 	provider ConnectionProvider
 	resolver Resolver
+	handler  ConnectionHandler
 }
 
 type SessionManagerOptions struct {
 	DialOptions
 	Resolver Resolver // 默认为空时，不支持 P2P 寻址
+	Handler  ConnectionHandler
 }
 
 func NewSessionManager(options *SessionManagerOptions) (mgr SessionManager) {
@@ -34,6 +36,7 @@ func NewSessionManager(options *SessionManagerOptions) (mgr SessionManager) {
 		mutex:    &sync.RWMutex{},
 		provider: newDefaultConnectionProvider(&options.DialOptions),
 		resolver: options.Resolver,
+		handler:  options.Handler,
 	}
 	return
 }
@@ -91,16 +94,18 @@ func (mgr *DefaultSessionManager) EnsureConn(ctx context.Context, peer *entity.R
 		return
 	}
 	mgr.put(peer, conn)
-	go func(conn quic.Connection, peer entity.RemotePeer) {
-		ctx := conn.Context()
-		log.Println("<SessionManager.Acquire> connection: ", peer.DeviceID, peer.Address, " started ...")
-		// 监听链接持续时间
-		<-ctx.Done()
-		log.Println("<SessionManager.Acquire> connection: ", peer.DeviceID, peer.Address, " closed.")
+	go func(conn quic.Connection, peer entity.RemotePeer, handler ConnectionHandler) {
+		// log.Println("<SessionManager.Acquire> connection: ", peer.DeviceID, peer.Address, " started ...")
+		if handler != nil {
+			handler.ServeConn(context.Background(), conn)
+		} else {
+			<-conn.Context().Done() // 监听链接持续时间
+		}
+		// log.Println("<SessionManager.Acquire> connection: ", peer.DeviceID, peer.Address, " closed.")
 
 		conn.CloseWithError(quic.ApplicationErrorCode(0), "close")
 		mgr.del(&peer, conn)
-	}(conn, *peer)
+	}(conn, *peer, mgr.handler)
 	return conn, nil
 }
 

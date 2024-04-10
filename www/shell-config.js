@@ -1,4 +1,4 @@
-export function setup(term, sock) {
+export function connect(term, sock) {
     return new echo(term, sock);
 }
 
@@ -37,20 +37,22 @@ class echo {
 
     positionReset() {
         const dx = this.px - this.term.buffer.active.cursorX;
-        const dy = this.py - this.term.buffer.active.cursorY;
-        move(this.term, dx, dy);
+        const dy = this.py - (this.term.buffer.active.baseY + this.term.buffer.active.cursorY);
+        console.log(dx, dy);
+        // move(this.term, dx, dy);
         this.px = -1;
         this.py = -1;
     }
 
     positionSave() {
         this.px = this.term.buffer.active.cursorX;
-        this.py = this.term.buffer.active.cursorY;
+        this.py = this.term.buffer.active.baseY + this.term.buffer.active.cursorY;
     }
 
     onSend(payload) {
         if (this.q.length > 0) {
-            const data = DEFAULT_TEXT_ENCODER.encode(this.q.join(""));
+            // const data = DEFAULT_TEXT_ENCODER.encode(this.q.join(""));
+            const data = this.q.join("");
             this.q.splice(0, this.q.length);
             this.sock.send(data);
         }
@@ -73,3 +75,33 @@ function move(term, x, y) {
     term.write(move);
 }
 
+
+export let theme = {
+    foreground: "#c5c8c6",
+    background: "#161719",
+    cursor: "#d0d0d0",
+
+    black: "#000000",
+    brightBlack: "#000000",
+
+    red: "#fd5ff1",
+    brightRed: "#fd5ff1",
+
+    green: "#87c38a",
+    brightGreen: "#94fa36",
+
+    yellow: "#ffd7b1",
+    brightYellow: "#f5ffa8",
+
+    blue: "#85befd",
+    brightBlue: "#96cbfe",
+
+    magenta: "#b9b6fc",
+    brightMagenta: "#b9b6fc",
+
+    cyan: "#85befd",
+    brightCyan: "#85befd",
+
+    white: "#e0e0e0",
+    brightWhite: "#e0e0e0",
+};

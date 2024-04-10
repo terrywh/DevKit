@@ -26,7 +26,7 @@ type ShellHandler struct {
 	shell map[entity.ShellID]*entity.RemoteShell
 }
 
-func newShellHandler(mgr stream.SessionManager, mux *http.ServeMux) *ShellHandler {
+func initShellHandler(mgr stream.SessionManager, mux *http.ServeMux) *ShellHandler {
 	css := &ShellHandler{
 		mgr:   mgr,
 		mutex: &sync.RWMutex{},
