@@ -45,6 +45,7 @@ func (handler *HandlerPull) Do(ctx context.Context) (err error) {
 	// file, _ := os.Create("./pull.rst")
 	// defer file.Close()
 	// log.Println(io.Copy(file, rsp.Body))
+	// return
 
 	x := entity.HttpResponse{Data: &sf.StreamFile}
 	r := bufio.NewReader(rsp.Body)
@@ -52,7 +53,7 @@ func (handler *HandlerPull) Do(ctx context.Context) (err error) {
 		return err
 	}
 	var path string
-	if path, err = handler.streaming(&sf.StreamFile, r); err != nil {
+	if path, err = handler.streaming(ctx, &sf.StreamFile, r); err != nil {
 		return err
 	}
 	if !handler.override && handler.exists(sf.Path) {
@@ -62,7 +63,7 @@ func (handler *HandlerPull) Do(ctx context.Context) (err error) {
 	return
 }
 
-func (handler *HandlerPull) streaming(sf *entity.StreamFile, src io.Reader) (path string, err error) {
+func (handler *HandlerPull) streaming(ctx context.Context, sf *entity.StreamFile, src io.Reader) (path string, err error) {
 	file, err := os.CreateTemp(filepath.Dir(sf.Path), filepath.Base(sf.Path)+".devkit_tmp_")
 	path = file.Name()
 	if err != nil {
@@ -75,7 +76,9 @@ func (handler *HandlerPull) streaming(sf *entity.StreamFile, src io.Reader) (pat
 		sf.Size,
 		"传输",
 	)
-	size, err := io.Copy(io.MultiWriter(file, pr), src)
+	defer pr.Close()
+
+	size, err := io.Copy(io.MultiWriter(file, pr, app.ContextDiscardWriter{ctx}), src)
 	if err != nil {
 		return
 	}
@@ -93,4 +96,8 @@ func (handler *HandlerPull) exists(path string) bool {
 		return false
 	}
 	return true
+}
+
+func (handler *HandlerPull) Close() error {
+	return nil
 }

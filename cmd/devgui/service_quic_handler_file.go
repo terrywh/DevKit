@@ -62,9 +62,8 @@ func (handler *FileHandler) HandlePull(ctx context.Context, src *stream.SessionS
 
 	log.Println("<StreamFile.ServeClient> streaming file: ", path, " => ", sf.Path, sf.Size, sf.Perm)
 
-	handler.Respond(src, sf)
-	if err = app.SendJSON(src, sf); err != nil {
-		log.Println("<FileHandler.HandlePull")
+	if err = handler.Respond(src, sf); err != nil {
+		log.Println("<FileHandler.HandlePull> failed to respond: ", err)
 		return
 	}
 

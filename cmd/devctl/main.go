@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -52,13 +51,12 @@ func main() {
 	if gcmd == "help" {
 		fmt.Println(os.Args[0], "<global-options>", scmd, "<command-options>")
 		flagCommand.Usage()
-	} else {
-		flagCommand.Parse(flagGlobal.Args()[1:])
-		err := handler.Do(context.TODO())
-		if err != nil {
-			fmt.Printf("error: failed to %s, due to: %s\n", scmd, err.Error())
-			os.Exit(-1)
-			return
-		}
+		return
 	}
+	flagCommand.Parse(flagGlobal.Args()[1:])
+
+	sc := app.NewServiceController()
+	sc.Start(&HandlerService{scmd, handler})
+	sc.WaitForSignal()
+	sc.Close()
 }
