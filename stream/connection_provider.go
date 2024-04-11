@@ -10,11 +10,11 @@ import (
 
 // ConnectionProvider 链接器（不需要进行多线程保护）
 type ConnectionProvider interface {
-	Acquire(ctx context.Context, peer *entity.RemotePeer) (quic.Connection, error)
+	Acquire(ctx context.Context, peer *entity.Server) (quic.Connection, error)
 }
 
 type ConnectionProviderCommand interface {
-	Execute(ctx context.Context, peer *entity.RemotePeer, conn quic.Connection)
+	Execute(ctx context.Context, peer *entity.Server, conn quic.Connection)
 }
 
 type DefaultConnectionProvider struct {
@@ -39,7 +39,7 @@ func newDefaultConnectionProvider(options *DialOptions) (dp *DefaultConnectionPr
 	return dp
 }
 
-func (provider *DefaultConnectionProvider) Acquire(ctx context.Context, peer *entity.RemotePeer) (conn quic.Connection, err error) {
+func (provider *DefaultConnectionProvider) Acquire(ctx context.Context, peer *entity.Server) (conn quic.Connection, err error) {
 	opts := provider.options
 	opts.Address = peer.Address
 	conn, peer.DeviceID, err = DefaultTransport.Dial(ctx, &opts)

@@ -24,7 +24,7 @@ func initQuicFileHandler(mux *stream.ServeMux) *QuicFileHandler {
 }
 
 func (handler *QuicFileHandler) HandlePush(ctx context.Context, src *stream.SessionStream) {
-	sf := entity.StreamFilePush{}
+	sf := entity.FilePush{}
 	if err := app.ReadJSON(src.Reader(), &sf); err != nil {
 		handler.Respond(src, err)
 		return

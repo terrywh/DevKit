@@ -7,7 +7,7 @@ import (
 )
 
 type Resolver interface {
-	Resolve(ctx context.Context, peer *entity.RemotePeer) error
+	Resolve(ctx context.Context, peer *entity.Server) error
 	Serve(ctx context.Context)
 	Close() error
 }

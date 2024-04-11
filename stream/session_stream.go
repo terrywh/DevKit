@@ -9,13 +9,13 @@ import (
 )
 
 type SessionStream struct {
-	Peer entity.RemotePeer
+	Peer entity.Server
 	Conn quic.Connection
 	s    quic.Stream
 	r    *bufio.Reader
 }
 
-func NewSessionStream(peer *entity.RemotePeer, conn quic.Connection) (ss *SessionStream, err error) {
+func NewSessionStream(peer *entity.Server, conn quic.Connection) (ss *SessionStream, err error) {
 	ss = &SessionStream{
 		Peer: *peer,
 		Conn: conn,
@@ -43,7 +43,7 @@ func (ss *SessionStream) RemoteAddr() net.Addr {
 	return ss.Conn.RemoteAddr()
 }
 
-func (ss *SessionStream) RemotePeer() *entity.RemotePeer {
+func (ss *SessionStream) RemotePeer() *entity.Server {
 	return &ss.Peer
 }
 

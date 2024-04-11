@@ -25,7 +25,7 @@ func initFileHandler(mgr stream.SessionManager, mux *stream.ServeMux) *FileHandl
 }
 
 func (handler *FileHandler) HandlePull(ctx context.Context, src *stream.SessionStream) {
-	sf := entity.StreamFilePull{}
+	sf := entity.FilePull{}
 
 	if err := app.ReadJSON(src.Reader(), &sf); err != nil {
 		handler.Respond(src, err)

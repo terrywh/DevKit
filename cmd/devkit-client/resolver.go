@@ -17,7 +17,7 @@ type Resolver struct {
 }
 
 type ResolverCommand interface {
-	Execute(ctx context.Context, peer *entity.RemotePeer, conn quic.Connection)
+	Execute(ctx context.Context, peer *entity.Server, conn quic.Connection)
 }
 
 func newResolver(options *stream.DialOptions) (r *Resolver) {
@@ -34,7 +34,7 @@ func (r *Resolver) Serve(ctx context.Context) {
 	opts := r.options
 	var err error
 	var conn quic.Connection
-	peer := &entity.RemotePeer{
+	peer := &entity.Server{
 		Address: r.options.Address,
 	}
 	log.Println("<DefaultConnectionProvider.Serve> started ...")
@@ -66,7 +66,7 @@ SERVING:
 	log.Println("<DefaultConnectionProvider.Serve> closed.")
 }
 
-func (r *Resolver) Resolve(ctx context.Context, peer *entity.RemotePeer) error {
+func (r *Resolver) Resolve(ctx context.Context, peer *entity.Server) error {
 	cmd := newResolverCommandDial(peer)
 	r.command <- cmd
 	reply := <-cmd.C
@@ -82,22 +82,22 @@ func (r *Resolver) Close() error {
 
 type ResolverCommandDialReply struct {
 	E error
-	P *entity.RemotePeer
+	P *entity.Server
 }
 
 type ResolverCommandDial struct {
 	C chan *ResolverCommandDialReply
-	P *entity.RemotePeer
+	P *entity.Server
 }
 
-func newResolverCommandDial(peer *entity.RemotePeer) *ResolverCommandDial {
+func newResolverCommandDial(peer *entity.Server) *ResolverCommandDial {
 	return &ResolverCommandDial{
 		C: make(chan *ResolverCommandDialReply),
 		P: peer,
 	}
 }
 
-func (rcd *ResolverCommandDial) Execute(ctx context.Context, peer *entity.RemotePeer, conn quic.Connection) {
+func (rcd *ResolverCommandDial) Execute(ctx context.Context, peer *entity.Server, conn quic.Connection) {
 	ss, err := stream.NewSessionStream(peer, conn)
 
 	r := &ResolverCommandDialReply{

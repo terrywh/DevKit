@@ -21,7 +21,7 @@ func initServiceP2PHandler(mux *stream.ServeMux) {
 }
 
 func (handler *ServiceP2PHandler) HandleDial(ctx context.Context, src *stream.SessionStream) {
-	peer := entity.RemotePeer{}
+	peer := entity.Server{}
 	if err := app.ReadJSON(src.Reader(), &peer); err != nil {
 		handler.Respond(src, err)
 		return

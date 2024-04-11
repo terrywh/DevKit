@@ -29,8 +29,8 @@ func (handler *HandlerPull) InitFlag(fs *flag.FlagSet) {
 func (handler *HandlerPull) Do(ctx context.Context) (err error) {
 	wd, _ := os.Getwd()
 	sf := entity.ServerStreamFilePull{
-		StreamFilePull: entity.StreamFilePull{
-			StreamFile: entity.StreamFile{
+		FilePull: entity.FilePull{
+			File: entity.File{
 				Path: wd,
 			},
 		},
@@ -47,13 +47,13 @@ func (handler *HandlerPull) Do(ctx context.Context) (err error) {
 	// log.Println(io.Copy(file, rsp.Body))
 	// return
 
-	x := entity.HttpResponse{Data: &sf.StreamFile}
+	x := entity.HttpResponse{Data: &sf.File}
 	r := bufio.NewReader(rsp.Body)
 	if err = app.ReadJSON(r, &x); err != nil {
 		return err
 	}
 	var path string
-	if path, err = handler.streaming(ctx, &sf.StreamFile, r); err != nil {
+	if path, err = handler.streaming(ctx, &sf.File, r); err != nil {
 		return err
 	}
 	if !handler.override && handler.exists(sf.Path) {
@@ -63,7 +63,7 @@ func (handler *HandlerPull) Do(ctx context.Context) (err error) {
 	return
 }
 
-func (handler *HandlerPull) streaming(ctx context.Context, sf *entity.StreamFile, src io.Reader) (path string, err error) {
+func (handler *HandlerPull) streaming(ctx context.Context, sf *entity.File, src io.Reader) (path string, err error) {
 	file, err := os.CreateTemp(filepath.Dir(sf.Path), filepath.Base(sf.Path)+".devkit_tmp_")
 	path = file.Name()
 	if err != nil {

@@ -23,14 +23,14 @@ type ShellHandler struct {
 	app.HttpHandlerBase
 	mgr   stream.SessionManager
 	mutex *sync.RWMutex
-	shell map[entity.ShellID]*entity.RemoteShell
+	shell map[entity.ShellID]*entity.ServerShell
 }
 
 func initShellHandler(mgr stream.SessionManager, mux *http.ServeMux) *ShellHandler {
 	css := &ShellHandler{
 		mgr:   mgr,
 		mutex: &sync.RWMutex{},
-		shell: make(map[entity.ShellID]*entity.RemoteShell),
+		shell: make(map[entity.ShellID]*entity.ServerShell),
 	}
 
 	mux.HandleFunc("/shell/prepare", css.HandlePrepare)
@@ -42,20 +42,20 @@ func initShellHandler(mgr stream.SessionManager, mux *http.ServeMux) *ShellHandl
 	return css
 }
 
-func (css *ShellHandler) put(e *entity.RemoteShell) {
+func (css *ShellHandler) put(e *entity.ServerShell) {
 	css.mutex.Lock()
 	defer css.mutex.Unlock()
 	css.shell[e.ShellId] = e
 }
 
-func (css *ShellHandler) get(shell_id entity.ShellID) *entity.RemoteShell {
+func (css *ShellHandler) get(shell_id entity.ShellID) *entity.ServerShell {
 	css.mutex.RLock()
 	defer css.mutex.RUnlock()
 
 	return css.shell[shell_id]
 }
 
-func (css *ShellHandler) del(e *entity.RemoteShell) {
+func (css *ShellHandler) del(e *entity.ServerShell) {
 	css.mutex.Lock()
 	defer css.mutex.Unlock()
 	delete(css.shell, e.ShellId)
@@ -66,7 +66,7 @@ func (css *ShellHandler) HandlePrepare(rsp http.ResponseWriter, req *http.Reques
 	defer cancel()
 
 	d := json.NewDecoder(req.Body)
-	e := &entity.RemoteShell{}
+	e := &entity.ServerShell{}
 	if err := d.Decode(e); err != nil {
 		css.Respond(rsp, err)
 		return
@@ -89,7 +89,7 @@ func (css *ShellHandler) HandleSocket(rsp http.ResponseWriter, req *http.Request
 	}
 	defer css.del(e)
 	// 确认对应会话通道
-	ss, err := css.mgr.Acquire(ctx, &e.RemotePeer)
+	ss, err := css.mgr.Acquire(ctx, &e.Server)
 	if err != nil {
 		log.Println("<ServiceHttpShell.HandleSocket> failed to acquire stream: ", err)
 		return
@@ -113,14 +113,14 @@ func (css *ShellHandler) HandleSocket(rsp http.ResponseWriter, req *http.Request
 	}
 }
 
-func (css *ShellHandler) prepareShell(ctx context.Context, server *entity.RemoteShell) (err error) {
+func (css *ShellHandler) prepareShell(ctx context.Context, server *entity.ServerShell) (err error) {
 	// 确保能够联通（内部可能通过 REGISTRY 进行地址查询和反向发包）
 	var ss *stream.SessionStream
-	ss, err = css.mgr.Acquire(ctx, &server.RemotePeer)
+	ss, err = css.mgr.Acquire(ctx, &server.Server)
 	if err != nil {
 		return
 	}
-	if err = app.Invoke(ctx, ss, "/device/query", &server.RemotePeer, &server.RemotePeer); err != nil {
+	if err = app.Invoke(ctx, ss, "/device/query", &server.Server, &server.Server); err != nil {
 		return
 	}
 	server.ShellId = entity.ShellID(uuid.New().String())
@@ -135,7 +135,7 @@ func (css *ShellHandler) splitSocket(ctx context.Context, c *websocket.Conn) (r 
 	return
 }
 
-func (css *ShellHandler) serveShell(_ context.Context, e *entity.RemoteShell, ss *stream.SessionStream, r io.Reader, w io.Writer) (err error) {
+func (css *ShellHandler) serveShell(_ context.Context, e *entity.ServerShell, ss *stream.SessionStream, r io.Reader, w io.Writer) (err error) {
 	if r == os.Stdin { // 对直接透传的 Shell 设定当前 Stdin 状态
 		state, _ := term.MakeRaw(int(os.Stdin.Fd()))
 		e.Cols, e.Rows, _ = term.GetSize(int(os.Stdin.Fd()))
@@ -162,7 +162,7 @@ func (css *ShellHandler) HandleResize(rsp http.ResponseWriter, req *http.Request
 		return
 	}
 	json.NewDecoder(req.Body).Decode(e)
-	ss, err := css.mgr.Acquire(ctx, &e.RemotePeer)
+	ss, err := css.mgr.Acquire(ctx, &e.Server)
 	if err != nil {
 		log.Println("<ServiceHttpShell.HandleSocket> failed acquire session: ", err)
 		css.Respond(rsp, err)

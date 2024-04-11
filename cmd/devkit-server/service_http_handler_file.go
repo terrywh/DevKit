@@ -34,23 +34,23 @@ func (handler *FileHandler) HandlePull(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	fp.DeviceID = shell.DeviceID
-	src, err := stream.NewSessionStream(&shell.RemotePeer, shell.conn)
+	src, err := stream.NewSessionStream(&shell.Server, shell.conn)
 	if err != nil {
 		handler.Respond(w, fmt.Errorf("failed to create stream: %w", err))
 		return
 	}
 	log.Println("<FileHandler.HandlePull> streaming file: ", fp.Path, fp.Size, fp.Perm)
 	io.WriteString(src, "/file/pull:")
-	if err = app.SendJSON(src, fp.StreamFilePull); err != nil {
+	if err = app.SendJSON(src, fp.FilePull); err != nil {
 		handler.Respond(w, fmt.Errorf("failed to send json: %w", err))
 		return
 	}
-	rsp := entity.HttpResponse{Data: &fp.StreamFile}
+	rsp := entity.HttpResponse{Data: &fp.File}
 	if err = app.ReadJSON(src.Reader(), &rsp); err != nil {
 		handler.Respond(w, fmt.Errorf("failed to read json: %w", err))
 		return
 	}
-	handler.Respond(w, fp.StreamFile)
+	handler.Respond(w, fp.File)
 	var size int64
 	if size, err = io.Copy(w, src); err != nil || size != fp.Size { // 将文件数据透传给 devctl 转写文件
 		log.Println("failed to streaming file: ", err, size, "/", fp.Size)

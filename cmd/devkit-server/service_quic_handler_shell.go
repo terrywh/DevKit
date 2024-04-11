@@ -20,7 +20,7 @@ type ShellHandler struct {
 }
 
 type ServerShell struct {
-	entity.RemoteShell
+	entity.ServerShell
 	cpid int          `json:"-"`
 	cpty infra.Pseudo `json:"-"`
 	conn quic.Connection

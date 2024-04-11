@@ -1,22 +1,22 @@
 package entity
 
-type StreamFile struct {
+type File struct {
 	Path string `json:"path"`
 	Size int64  `json:"size"`
 	Perm uint32 `json:"perm"`
 }
 
-type StreamFilePull struct {
-	StreamFile
+type FilePull struct {
+	File
 	DeviceID DeviceID `json:"device_id"`
 }
 
-type StreamFilePush struct {
-	StreamFile
+type FilePush struct {
+	File
 	Override bool `json:"override"`
 }
 
 type ServerStreamFilePull struct {
-	StreamFilePull
+	FilePull
 	Pid int `json:"pid"`
 }

@@ -10,8 +10,8 @@ import (
 )
 
 type SessionManager interface {
-	EnsureConn(ctx context.Context, peer *entity.RemotePeer) (conn quic.Connection, err error)
-	Acquire(ctx context.Context, peer *entity.RemotePeer) (stream *SessionStream, err error)
+	EnsureConn(ctx context.Context, peer *entity.Server) (conn quic.Connection, err error)
+	Acquire(ctx context.Context, peer *entity.Server) (stream *SessionStream, err error)
 	Serve(ctx context.Context)
 	Close() error
 }
@@ -53,7 +53,7 @@ func (mgr *DefaultSessionManager) Close() error {
 	return nil
 }
 
-func (mgr *DefaultSessionManager) get(peer *entity.RemotePeer) (conn quic.Connection) {
+func (mgr *DefaultSessionManager) get(peer *entity.Server) (conn quic.Connection) {
 	mgr.mutex.RLock()
 	defer mgr.mutex.RUnlock()
 
@@ -62,14 +62,14 @@ func (mgr *DefaultSessionManager) get(peer *entity.RemotePeer) (conn quic.Connec
 	}
 	return conn
 }
-func (mgr *DefaultSessionManager) put(peer *entity.RemotePeer, conn quic.Connection) {
+func (mgr *DefaultSessionManager) put(peer *entity.Server, conn quic.Connection) {
 	mgr.mutex.Lock()
 	defer mgr.mutex.Unlock()
 
 	mgr.conn[peer.DeviceID] = conn
 }
 
-func (mgr *DefaultSessionManager) del(peer *entity.RemotePeer, conn quic.Connection) {
+func (mgr *DefaultSessionManager) del(peer *entity.Server, conn quic.Connection) {
 	mgr.mutex.Lock()
 	defer mgr.mutex.Unlock()
 
@@ -79,7 +79,7 @@ func (mgr *DefaultSessionManager) del(peer *entity.RemotePeer, conn quic.Connect
 	}
 }
 
-func (mgr *DefaultSessionManager) EnsureConn(ctx context.Context, peer *entity.RemotePeer) (conn quic.Connection, err error) {
+func (mgr *DefaultSessionManager) EnsureConn(ctx context.Context, peer *entity.Server) (conn quic.Connection, err error) {
 	if conn = mgr.get(peer); conn != nil {
 		return
 	}
@@ -94,7 +94,7 @@ func (mgr *DefaultSessionManager) EnsureConn(ctx context.Context, peer *entity.R
 		return
 	}
 	mgr.put(peer, conn)
-	go func(conn quic.Connection, peer entity.RemotePeer, handler ConnectionHandler) {
+	go func(conn quic.Connection, peer entity.Server, handler ConnectionHandler) {
 		// log.Println("<SessionManager.Acquire> connection: ", peer.DeviceID, peer.Address, " started ...")
 		if handler != nil {
 			handler.ServeConn(context.Background(), conn)
@@ -109,7 +109,7 @@ func (mgr *DefaultSessionManager) EnsureConn(ctx context.Context, peer *entity.R
 	return conn, nil
 }
 
-func (mgr *DefaultSessionManager) Acquire(ctx context.Context, peer *entity.RemotePeer) (ss *SessionStream, err error) {
+func (mgr *DefaultSessionManager) Acquire(ctx context.Context, peer *entity.Server) (ss *SessionStream, err error) {
 	var conn quic.Connection
 	conn, err = mgr.EnsureConn(ctx, peer)
 	if err != nil {
