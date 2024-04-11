@@ -120,7 +120,7 @@ func (css *ShellHandler) prepareShell(ctx context.Context, server *entity.Remote
 	if err != nil {
 		return
 	}
-	if err = ss.Invoke(ctx, "/device/query", &server.RemotePeer, &server.RemotePeer); err != nil {
+	if err = app.Invoke(ctx, ss, "/device/query", &server.RemotePeer, &server.RemotePeer); err != nil {
 		return
 	}
 	server.ShellId = entity.ShellID(uuid.New().String())
@@ -168,7 +168,7 @@ func (css *ShellHandler) HandleResize(rsp http.ResponseWriter, req *http.Request
 		css.Respond(rsp, err)
 		return
 	}
-	err = ss.Invoke(ctx, "/shell/resize", e, nil)
+	err = app.Invoke(ctx, ss, "/shell/resize", e, nil)
 	css.Respond(rsp, err)
 }
 

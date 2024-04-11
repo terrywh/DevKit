@@ -74,7 +74,7 @@ func (hss *ShellHandler) HandleStart(ctx context.Context, src *stream.SessionStr
 	log.Println("<ServiceQuicHandlerShell.HandleStart> device =", src.RemotePeer().DeviceID)
 	var err error
 	e := &ServerShell{}
-	if err = src.Pull(&e); err != nil {
+	if err = app.ReadJSON(src.Reader(), &e); err != nil {
 		hss.Respond(src, err)
 		return
 	}
@@ -114,7 +114,7 @@ func (hss *ShellHandler) HandleStart(ctx context.Context, src *stream.SessionStr
 
 func (hss *ShellHandler) HandleResize(ctx context.Context, src *stream.SessionStream) {
 	e1 := &ServerShell{}
-	if err := src.Pull(&e1); err != nil {
+	if err := app.ReadJSON(src.Reader(), &e1); err != nil {
 		hss.Respond(src, err)
 		return
 	}

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/quic-go/quic-go"
+	"github.com/terrywh/devkit/app"
 	"github.com/terrywh/devkit/entity"
 	"github.com/terrywh/devkit/stream"
 )
@@ -107,6 +108,6 @@ func (rcd *ResolverCommandDial) Execute(ctx context.Context, peer *entity.Remote
 		rcd.C <- r
 		return
 	}
-	r.E = ss.Invoke(ctx, "/registry/dial", rcd.P, r.P)
+	r.E = app.Invoke(ctx, ss, "/registry/dial", rcd.P, r.P)
 	rcd.C <- r
 }

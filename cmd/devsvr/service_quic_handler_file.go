@@ -24,8 +24,8 @@ func initQuicFileHandler(mux *stream.ServeMux) *QuicFileHandler {
 }
 
 func (handler *QuicFileHandler) HandlePush(ctx context.Context, src *stream.SessionStream) {
-	sf := entity.StreamFile{}
-	if err := src.Pull(&sf); err != nil {
+	sf := entity.StreamFilePush{}
+	if err := app.ReadJSON(src.Reader(), &sf); err != nil {
 		handler.Respond(src, err)
 		return
 	}
@@ -45,11 +45,23 @@ func (handler *QuicFileHandler) HandlePush(ctx context.Context, src *stream.Sess
 		return
 	}
 	if size != sf.Size {
-		log.Println("<StreamFile.ServeServer> size mismatched")
 		handler.Respond(src, entity.ErrFileCorrupted)
 		return
 	}
 	file.Close()
 	os.Chmod(file.Name(), fs.FileMode(sf.Perm))
+
+	if !sf.Override && handler.exists(sf.Path) {
+		handler.Respond(src, entity.ErrFileExisted)
+		return
+	}
+	os.Rename(file.Name(), sf.Path)
 	handler.Respond(src, nil)
+}
+
+func (handler *QuicFileHandler) exists(path string) bool {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return false
+	}
+	return true
 }

@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"io"
 	"log"
 	"os"
@@ -28,7 +27,7 @@ func initFileHandler(mgr stream.SessionManager, mux *stream.ServeMux) *FileHandl
 func (handler *FileHandler) HandlePull(ctx context.Context, src *stream.SessionStream) {
 	sf := entity.StreamFilePull{}
 
-	if err := src.Pull(&sf); err != nil {
+	if err := app.ReadJSON(src.Reader(), &sf); err != nil {
 		handler.Respond(src, err)
 		return
 	}
@@ -44,12 +43,12 @@ func (handler *FileHandler) HandlePull(ctx context.Context, src *stream.SessionS
 		return
 	}
 
-	dst, err := handler.mgr.Acquire(ctx, &src.Peer)
-	if err != nil {
-		handler.Respond(src, err)
-		return
-	}
-	defer dst.Close()
+	// dst, err := handler.mgr.Acquire(ctx, &src.Peer)
+	// if err != nil {
+	// 	handler.Respond(src, err)
+	// 	return
+	// }
+	// defer dst.Close()
 
 	file, err := os.Open(path)
 	if err != nil {
@@ -63,17 +62,20 @@ func (handler *FileHandler) HandlePull(ctx context.Context, src *stream.SessionS
 
 	log.Println("<StreamFile.ServeClient> streaming file: ", path, " => ", sf.Path, sf.Size, sf.Perm)
 
-	io.WriteString(dst, "/file/push:")
-	json.NewEncoder(dst).Encode(sf)
+	handler.Respond(src, sf)
+	if err = app.SendJSON(src, sf); err != nil {
+		log.Println("<FileHandler.HandlePull")
+		return
+	}
 
-	if size, err := io.Copy(dst, file); err != nil || size != sf.Size {
+	if size, err := io.Copy(src, file); err != nil || size != sf.Size {
 		log.Println("<StreamFile.ServeClient> failed to stream file: ", err, "or data corruption")
 		handler.Respond(src, entity.ErrFileCorrupted)
 		return
 	}
-	dst.Close() // 关闭写（发送完毕）
+	src.Close() // 关闭写（发送完毕）
 	x := entity.HttpResponse{}
-	if err = dst.Pull(&x); err == nil {
+	if err = app.ReadJSON(src.Reader(), &x); err == nil {
 		err = x.Error
 	}
 	if err != nil {

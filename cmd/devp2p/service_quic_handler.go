@@ -26,7 +26,7 @@ type ServiceQuicHandler struct {
 
 func (handler *ServiceQuicHandler) HandleDial(ctx context.Context, src *stream.SessionStream) {
 	server := entity.RemotePeer{}
-	if err := src.Pull(&server); err != nil {
+	if err := app.ReadJSON(src.Reader(), &server); err != nil {
 		handler.Respond(src, err)
 		return
 	}
@@ -44,7 +44,8 @@ func (handler *ServiceQuicHandler) HandleDial(ctx context.Context, src *stream.S
 	handler.Respond(src, server)
 }
 
-func (handler *ServiceQuicHandler) dial1RelayToServer(ctx context.Context, server *entity.RemotePeer, client *entity.RemotePeer) (err error) {
+func (handler *ServiceQuicHandler) dial1RelayToServer(ctx context.Context,
+	server *entity.RemotePeer, client *entity.RemotePeer) (err error) {
 	conn := handler.tracker.GetConn(server.DeviceID)
 	if conn == nil {
 		err = entity.ErrSessionNotFound
@@ -52,10 +53,10 @@ func (handler *ServiceQuicHandler) dial1RelayToServer(ctx context.Context, serve
 	}
 	server.Address = conn.RemoteAddr().String()
 
-	ss, err := stream.NewSessionStream(server, conn)
+	src, err := stream.NewSessionStream(server, conn)
 	if err != nil {
 		return
 	}
-	err = ss.Invoke(ctx, "/registry/dial", client, nil)
+	err = app.Invoke(ctx, src, "/registry/dial", client, nil)
 	return
 }

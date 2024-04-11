@@ -24,7 +24,7 @@ type ServiceRunning struct {
 
 type ServiceController struct {
 	wg      *sync.WaitGroup
-	running []ServiceRunning
+	running []*ServiceRunning
 }
 
 func NewServiceController() (sc *ServiceController) {
@@ -34,17 +34,17 @@ func NewServiceController() (sc *ServiceController) {
 
 func (sc *ServiceController) Start(svc Service) {
 	sc.wg.Add(1)
-	sr := ServiceRunning{
+	sr := &ServiceRunning{
 		svc: svc,
 	}
 	sr.ctx, sr.cancel = context.WithCancelCause(context.Background())
 	sc.running = append(sc.running, sr)
 
-	go func() {
+	go func(sr *ServiceRunning) {
 		defer sc.wg.Done()
 		defer sr.cancel(nil)
 		svc.Serve(sr.ctx)
-	}()
+	}(sr)
 }
 
 var ErrShutdown = errors.New("shutdown")
