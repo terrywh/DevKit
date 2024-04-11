@@ -3,7 +3,7 @@
 
 package entity
 
-func (o *RemoteShell) ApplyDefaults() {
+func (o *ServerShell) ApplyDefaults() {
 	if len(o.ShellCmd) < 1 {
 		o.ShellCmd = []string{"C:\\Windows\\System32\\cmd.exe"}
 	}

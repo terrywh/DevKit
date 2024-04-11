@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/terrywh/devkit/app"
 	"github.com/terrywh/devkit/entity"
@@ -23,36 +25,46 @@ func initFileHandler(mux *http.ServeMux) *FileHandler {
 }
 
 func (handler *FileHandler) HandlePull(w http.ResponseWriter, r *http.Request) {
-	fp := entity.ServerStreamFilePull{}
-	if err := json.NewDecoder(r.Body).Decode(&fp); err != nil {
-		handler.Respond(w, fmt.Errorf("failed to decode request body: %w", err))
-		return
-	}
-	shell := DefaultShellHandler.find(fp.Pid)
+	bash_id, _ := strconv.ParseUint(r.URL.Query().Get("bash_id"), 10, 32)
+	shell := DefaultShellHandler.find(int(bash_id))
 	if shell == nil {
 		handler.Respond(w, entity.ErrSessionNotFound)
 		return
 	}
-	fp.DeviceID = shell.DeviceID
 	src, err := stream.NewSessionStream(&shell.Server, shell.conn)
 	if err != nil {
 		handler.Respond(w, fmt.Errorf("failed to create stream: %w", err))
 		return
 	}
-	log.Println("<FileHandler.HandlePull> streaming file: ", fp.Path, fp.Size, fp.Perm)
+	defer src.CloseRead()
+	defer src.CloseWrite()
+
+	sf := entity.StreamFile{}
+	if err = json.NewDecoder(r.Body).Decode(&sf); err != nil {
+		handler.Respond(w, fmt.Errorf("failed to decode request body: %w", err))
+		return
+	}
 	io.WriteString(src, "/file/pull:")
-	if err = app.SendJSON(src, fp.FilePull); err != nil {
+	if err = app.SendJSON(src, sf); err != nil {
 		handler.Respond(w, fmt.Errorf("failed to send json: %w", err))
 		return
 	}
-	rsp := entity.HttpResponse{Data: &fp.File}
+	rsp := entity.Response{Error: &entity.DefaultErrorCode{}, Data: &sf}
 	if err = app.ReadJSON(src.Reader(), &rsp); err != nil {
 		handler.Respond(w, fmt.Errorf("failed to read json: %w", err))
 		return
 	}
-	handler.Respond(w, fp.File)
-	var size int64
-	if size, err = io.Copy(w, src); err != nil || size != fp.Size { // 将文件数据透传给 devctl 转写文件
-		log.Println("failed to streaming file: ", err, size, "/", fp.Size)
+	handler.Respond(w, sf)
+	if sf.Target.Path != "" { // 指定了目标文件，直接写入文件
+		proc := &app.StreamFile{Desc: &sf}
+		err = proc.Do(context.Background(), src)
+	} else { // 为指定时，在 RESPONSE 流中带回
+		sf.Target.Size, err = io.Copy(w, src)
+		if err == nil && sf.Target.Size != sf.Source.Size { // 将文件数据透传给 devctl 转写文件
+			err = entity.ErrFileCorrupted
+		}
+	}
+	if err != nil {
+		log.Println("<HttpFileHandler.HandlePull> failed to stream file:", err)
 	}
 }

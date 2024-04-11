@@ -74,6 +74,10 @@ func (sc *ServiceController) Close() error {
 	return nil
 }
 
+func (sc *ServiceController) Wait() {
+	sc.wg.Wait()
+}
+
 func (sc *ServiceController) WaitForSignal() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)

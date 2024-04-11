@@ -45,7 +45,7 @@ SERVING:
 		if err != nil {
 			break SERVING
 		}
-		go svr.Handler.ServeStream(context.Background(), &SessionStream{
+		go svr.Handler.ServeStream(ctx, &SessionStream{
 			Peer: entity.Server{DeviceID: device_id, Address: conn.RemoteAddr().String()},
 			Conn: conn, s: s, r: bufio.NewReader(s),
 		})

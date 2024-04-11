@@ -1,10 +1,9 @@
-/bin
-/etc
-/var
 /.DS_Store
 /.vscode
 /node_modules
 /bun.lockb
-/devkit
-/*/*.txt
+/util/*.txt
+/bin
+/etc
+/var
 /public

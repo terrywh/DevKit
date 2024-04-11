@@ -26,7 +26,7 @@ func SendJSON(dst io.Writer, src interface{}) (err error) {
 
 func Invoke(ctx context.Context, src *stream.SessionStream, path string,
 	req interface{}, rsp interface{}) (err error) {
-	defer src.Close()
+	defer src.CloseWrite()
 
 	if _, err = fmt.Fprintf(src, "%s:", path); err != nil {
 		return
@@ -34,7 +34,7 @@ func Invoke(ctx context.Context, src *stream.SessionStream, path string,
 	if err = SendJSON(src, req); err != nil {
 		return
 	}
-	r := entity.HttpResponse{Data: rsp}
+	r := entity.Response{Error: &entity.DefaultErrorCode{}, Data: rsp}
 	// Decoder 可能读取了更后面的内容，可以使用（响应内容已结束）
 	// err = json.NewDecoder(ss).Decode(&r)
 	if err = ReadJSON(src.Reader(), &r); err != nil {

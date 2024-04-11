@@ -2,21 +2,16 @@ package entity
 
 type File struct {
 	Path string `json:"path"`
-	Size int64  `json:"size"`
-	Perm uint32 `json:"perm"`
+	Size int64  `json:"size,omitempty"`
+	Perm uint32 `json:"perm,omitempty"`
 }
 
-type FilePull struct {
-	File
-	DeviceID DeviceID `json:"device_id"`
+type StreamFile struct {
+	Source  File              `json:"source,omitempty"`
+	Target  File              `json:"target,omitempty"`
+	Options StreamFileOptions `json:"options"`
 }
 
-type FilePush struct {
-	File
-	Override bool `json:"override"`
-}
-
-type ServerStreamFilePull struct {
-	FilePull
-	Pid int `json:"pid"`
+type StreamFileOptions struct {
+	Override bool `json:"override,omitempty"`
 }

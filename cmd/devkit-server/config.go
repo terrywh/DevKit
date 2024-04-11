@@ -32,6 +32,8 @@ type ConfigPayload struct {
 	Registry ConfigPayloadRegistry `yaml:"registry"`
 	Client   ConfigPayloadClient   `yaml:"client"`
 	Server   ConfigPayloadServer   `yaml:"server"`
+
+	cert     tls.Certificate
 	deviceID entity.DeviceID
 }
 
@@ -47,15 +49,23 @@ func (cp *ConfigPayload) InitFlag() {
 
 }
 
+func (cp *ConfigPayload) Certificate() tls.Certificate {
+	if len(cp.cert.Certificate) > 0 {
+		return cp.cert
+	}
+	var err error
+	cp.cert, err = tls.LoadX509KeyPair(cp.Server.Certificate, cp.Server.PrivateKey)
+	if err != nil {
+		panic("failed to load certificate: " + err.Error())
+	}
+	return cp.cert
+}
+
 func (cp *ConfigPayload) DeviceID() entity.DeviceID {
 	if len(cp.deviceID) > 0 {
 		return cp.deviceID
 	}
 
-	cert, err := tls.LoadX509KeyPair(cp.Server.Certificate, cp.Server.PrivateKey)
-	if err != nil {
-		panic("failed to load certificate: " + err.Error())
-	}
-	cp.deviceID = stream.DeviceIDFromCert(cert.Certificate[0])
+	cp.deviceID = stream.DeviceIDFromCert(cp.Certificate().Certificate[0])
 	return cp.deviceID
 }

@@ -4,8 +4,7 @@ import (
 	"bufio"
 	"context"
 	"flag"
-	"io"
-	"io/fs"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -26,19 +25,18 @@ func (handler *HandlerPull) InitFlag(fs *flag.FlagSet) {
 	fs.BoolVar(&handler.override, "override", false, "覆盖本地已存在的文件")
 }
 
+type BashQuery struct {
+	BashPid int `json:"bash_pid"`
+}
+
 func (handler *HandlerPull) Do(ctx context.Context) (err error) {
 	wd, _ := os.Getwd()
-	sf := entity.ServerStreamFilePull{
-		FilePull: entity.FilePull{
-			File: entity.File{
-				Path: wd,
-			},
-		},
-		Pid: os.Getppid(),
+	sf := entity.StreamFile{
+		// Target: entity.File{} // 获取到文件流，不指定目标
 	}
 
 	var rsp *http.Response
-	if rsp, err = handler.HTTPPost("/file/pull", sf); err != nil {
+	if rsp, err = handler.HTTPPost(fmt.Sprintf("/file/pull?bash_id=%d", os.Getppid()), sf); err != nil {
 		return err
 	}
 
@@ -47,55 +45,22 @@ func (handler *HandlerPull) Do(ctx context.Context) (err error) {
 	// log.Println(io.Copy(file, rsp.Body))
 	// return
 
-	x := entity.HttpResponse{Data: &sf.File}
+	x := entity.Response{Error: &entity.DefaultErrorCode{}, Data: &sf}
 	r := bufio.NewReader(rsp.Body)
 	if err = app.ReadJSON(r, &x); err != nil {
 		return err
 	}
-	var path string
-	if path, err = handler.streaming(ctx, &sf.File, r); err != nil {
-		return err
-	}
-	if !handler.override && handler.exists(sf.Path) {
-		return entity.ErrFileExisted
-	}
-	err = os.Rename(path, sf.Path)
+	prog := progressbar.DefaultBytes(sf.Source.Size)
+	defer prog.Close()
+	// 填写目标文件，从流接收写入
+	sf.Target.Path = filepath.Join(wd, filepath.Base(sf.Source.Path))
+	sf.Options.Override = handler.override
+
+	log.Printf("<HandlePull.Do> StreamFile: %+v", sf)
+
+	proc := &app.StreamFile{Desc: &sf, Prog: prog}
+	err = proc.Do(ctx, r)
 	return
-}
-
-func (handler *HandlerPull) streaming(ctx context.Context, sf *entity.File, src io.Reader) (path string, err error) {
-	file, err := os.CreateTemp(filepath.Dir(sf.Path), filepath.Base(sf.Path)+".devkit_tmp_")
-	path = file.Name()
-	if err != nil {
-		return
-	}
-	defer file.Close()
-
-	log.Println("<HandlerPull.streaming> streaming file:", sf.Path, sf.Size, sf.Perm)
-	pr := progressbar.DefaultBytes(
-		sf.Size,
-		"传输",
-	)
-	defer pr.Close()
-
-	size, err := io.Copy(io.MultiWriter(file, pr, app.ContextDiscardWriter{ctx}), src)
-	if err != nil {
-		return
-	}
-	if size != sf.Size {
-		err = entity.ErrFileCorrupted
-		return
-	}
-	file.Close()
-	err = os.Chmod(file.Name(), fs.FileMode(sf.Perm))
-	return
-}
-
-func (handler *HandlerPull) exists(path string) bool {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return false
-	}
-	return true
 }
 
 func (handler *HandlerPull) Close() error {

@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"log"
+	"fmt"
 	"path/filepath"
 
 	"github.com/terrywh/devkit/app"
@@ -17,7 +17,7 @@ func main() {
 	fw.Add(DefaultConfig)
 	flag.Parse()
 
-	log.Println("DeviceID: ", DefaultConfig.Get().DeviceID())
+	fmt.Println("DeviceID: ", DefaultConfig.Get().DeviceID())
 
 	stream.InitTransport(stream.TransportOptions{
 		LocalAddress: DefaultConfig.Get().Server.Address,

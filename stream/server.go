@@ -41,7 +41,7 @@ SERVING:
 		if err != nil {
 			break SERVING
 		}
-		go svr.handler.ServeConn(context.Background(), conn)
+		go svr.handler.ServeConn(ctx, conn)
 	}
 	log.Println("<Server.Serve> closed.")
 }

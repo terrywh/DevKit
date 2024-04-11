@@ -1,13 +1,11 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"io"
 	"log"
 	"net/http"
-	"os"
 	"sync"
 	"time"
 
@@ -15,7 +13,6 @@ import (
 	"github.com/terrywh/devkit/app"
 	"github.com/terrywh/devkit/entity"
 	"github.com/terrywh/devkit/stream"
-	"golang.org/x/term"
 	"nhooyr.io/websocket"
 )
 
@@ -26,7 +23,7 @@ type ShellHandler struct {
 	shell map[entity.ShellID]*entity.ServerShell
 }
 
-func initShellHandler(mgr stream.SessionManager, mux *http.ServeMux) *ShellHandler {
+func initHttpShellHandler(mgr stream.SessionManager, mux *http.ServeMux) *ShellHandler {
 	css := &ShellHandler{
 		mgr:   mgr,
 		mutex: &sync.RWMutex{},
@@ -89,12 +86,13 @@ func (css *ShellHandler) HandleSocket(rsp http.ResponseWriter, req *http.Request
 	}
 	defer css.del(e)
 	// 确认对应会话通道
-	ss, err := css.mgr.Acquire(ctx, &e.Server)
+	dst, err := css.mgr.Acquire(ctx, &e.Server)
 	if err != nil {
 		log.Println("<ServiceHttpShell.HandleSocket> failed to acquire stream: ", err)
 		return
 	}
-	defer ss.Close()
+	defer dst.CloseRead()
+	defer dst.CloseWrite()
 	// 确认对应前端通道
 	c, err := websocket.Accept(rsp, req, &websocket.AcceptOptions{
 		Subprotocols: []string{"shell"},
@@ -103,50 +101,47 @@ func (css *ShellHandler) HandleSocket(rsp http.ResponseWriter, req *http.Request
 		log.Println("<ServiceHttpShell.HandleSocket> failed to accept websocket: ", err)
 		return
 	}
-	defer c.CloseNow()
-	r, w := css.splitSocket(ctx, c)
 	// 通道双向对转
-	if err = css.serveShell(ctx, e, ss, r, w); err != nil {
-		c.Close(websocket.StatusNormalClosure, err.Error())
+	if err = css.serveShell(ctx, e, dst, NewWebSocketReader(ctx, c), NewWebSocketWriter(ctx, c)); err != nil {
+		c.Close(websocket.StatusAbnormalClosure, err.Error())
 	} else {
 		c.Close(websocket.StatusNormalClosure, "")
 	}
+	// c.CloseNow()
 }
 
-func (css *ShellHandler) prepareShell(ctx context.Context, server *entity.ServerShell) (err error) {
+func (css *ShellHandler) prepareShell(ctx context.Context, shell *entity.ServerShell) (err error) {
 	// 确保能够联通（内部可能通过 REGISTRY 进行地址查询和反向发包）
 	var ss *stream.SessionStream
-	ss, err = css.mgr.Acquire(ctx, &server.Server)
+	ss, err = css.mgr.Acquire(ctx, &shell.Server)
 	if err != nil {
 		return
 	}
-	if err = app.Invoke(ctx, ss, "/device/query", &server.Server, &server.Server); err != nil {
+	if err = app.Invoke(ctx, ss, "/device/query", &shell.Server, &shell.Server); err != nil {
 		return
 	}
-	server.ShellId = entity.ShellID(uuid.New().String())
-	css.put(server)
+	shell.ShellId = entity.ShellID(uuid.New().String())
+	css.put(shell)
 	return nil
 
 }
 
-func (css *ShellHandler) splitSocket(ctx context.Context, c *websocket.Conn) (r io.Reader, w io.WriteCloser) {
-	r = &WebsocketReader{ctx, c, &bytes.Buffer{}}
-	w = &WebsocketWriter{ctx, c}
-	return
-}
+func (css *ShellHandler) serveShell(_ context.Context, e *entity.ServerShell, src *stream.SessionStream, r io.Reader, w io.WriteCloser) (err error) {
+	// if r == os.Stdin { // 对直接透传的 Shell 设定当前 Stdin 状态
+	// 	state, _ := term.MakeRaw(int(os.Stdin.Fd()))
+	// 	e.Cols, e.Rows, _ = term.GetSize(int(os.Stdin.Fd()))
+	// 	defer term.Restore(int(os.Stdin.Fd()), state)
+	// }
 
-func (css *ShellHandler) serveShell(_ context.Context, e *entity.ServerShell, ss *stream.SessionStream, r io.Reader, w io.Writer) (err error) {
-	if r == os.Stdin { // 对直接透传的 Shell 设定当前 Stdin 状态
-		state, _ := term.MakeRaw(int(os.Stdin.Fd()))
-		e.Cols, e.Rows, _ = term.GetSize(int(os.Stdin.Fd()))
-		defer term.Restore(int(os.Stdin.Fd()), state)
-	}
+	io.WriteString(src, "/shell/start:")
+	json.NewEncoder(src).Encode(e)
 
-	io.WriteString(ss, "/shell/start:")
-	json.NewEncoder(ss).Encode(e)
-
-	go io.Copy(ss, r)
-	_, err = io.Copy(w, ss)
+	go func() {
+		io.Copy(src, r)
+		src.CloseWrite()
+	}()
+	_, err = io.Copy(w, src)
+	w.Close()
 	return
 }
 

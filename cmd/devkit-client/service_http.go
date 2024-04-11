@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/quic-go/quic-go"
 	"github.com/terrywh/devkit/stream"
 )
 
@@ -14,15 +13,11 @@ type HttpService struct {
 	svr http.Server
 }
 
-type SessionManager interface {
-	EnsureConn(conn quic.Connection, err error)
-}
-
 func newServiceHttp(mgr stream.SessionManager, mux *stream.ServeMux) (s *HttpService) {
 	s = &HttpService{mux: http.NewServeMux()}
 	s.svr = http.Server{Addr: DefaultConfig.Get().Client.Address, Handler: s.mux}
-	initShellHandler(mgr, s.mux)
-	initEventHandler(s.mux, mux)
+	initHttpShellHandler(mgr, s.mux)
+	initHttpFileHandler(mgr, s.mux)
 	s.mux.Handle("/node_modules/", http.FileServer(http.Dir(".")))
 	s.mux.Handle("/", http.FileServer(http.Dir("www")))
 	return

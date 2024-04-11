@@ -1,37 +1,50 @@
 package main
 
 import (
-	"bytes"
 	"context"
+	"io"
 
 	"nhooyr.io/websocket"
 )
 
 type WebsocketReader struct {
-	ctx    context.Context
-	conn   *websocket.Conn
-	buffer *bytes.Buffer
+	ctx  context.Context
+	conn *websocket.Conn
+	r    *io.PipeReader
+}
+
+func NewWebSocketReader(ctx context.Context, conn *websocket.Conn) io.Reader {
+	wsr := &WebsocketReader{ctx: ctx, conn: conn}
+	var w *io.PipeWriter
+	wsr.r, w = io.Pipe()
+	go func(w *io.PipeWriter) {
+		var err error
+		var data []byte
+		for {
+			if _, data, err = conn.Read(ctx); err != nil {
+				break
+			}
+			if _, err = w.Write(data); err != nil {
+				break
+			}
+		}
+		w.CloseWithError(err)
+	}(w)
+	return wsr
 }
 
 // Read io.Reader
 func (wsr *WebsocketReader) Read(data []byte) (n int, err error) {
-	if wsr.buffer.Len() > 0 {
-		return wsr.buffer.Read(data)
-	}
-	var payload []byte
-	if _, payload, err = wsr.conn.Read(wsr.ctx); err != nil {
-		return
-	}
-	n, err = wsr.buffer.Write(payload)
-	if err != nil {
-		return
-	}
-	return wsr.buffer.Read(data)
+	return wsr.r.Read(data)
 }
 
 type WebsocketWriter struct {
 	ctx  context.Context
 	conn *websocket.Conn
+}
+
+func NewWebSocketWriter(ctx context.Context, conn *websocket.Conn) *WebsocketWriter {
+	return &WebsocketWriter{ctx, conn}
 }
 
 func (wsr *WebsocketWriter) Write(data []byte) (n int, err error) {

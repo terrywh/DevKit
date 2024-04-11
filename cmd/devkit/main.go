@@ -57,6 +57,6 @@ func main() {
 
 	sc := app.NewServiceController()
 	sc.Start(&HandlerService{scmd, handler})
-	sc.WaitForSignal()
+	sc.Wait()
 	sc.Close()
 }

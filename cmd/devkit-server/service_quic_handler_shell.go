@@ -94,13 +94,13 @@ func (hss *ShellHandler) HandleStart(ctx context.Context, src *stream.SessionStr
 	go func() {
 		defer wg.Done()
 		io.Copy(src, e.cpty)
-		src.CloseRead()
-		src.Close()
+		src.CloseWrite()
 	}()
 	go func() {
 		defer wg.Done()
 		io.Copy(e.cpty, src)
 		e.cpty.Close()
+		// src.CloseRead()
 	}()
 	e.conn = src.Conn
 	e.cpid = e.cpty.Pid()
