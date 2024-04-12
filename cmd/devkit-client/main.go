@@ -2,11 +2,11 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"path/filepath"
 
 	"github.com/terrywh/devkit/app"
 	"github.com/terrywh/devkit/infra"
+	"github.com/terrywh/devkit/infra/color"
 	"github.com/terrywh/devkit/stream"
 )
 
@@ -17,7 +17,7 @@ func main() {
 	fw.Add(DefaultConfig)
 	flag.Parse()
 
-	fmt.Println("DeviceID: ", DefaultConfig.Get().DeviceID())
+	color.Info("DeviceID: ", DefaultConfig.Get().DeviceID(), "\n")
 
 	stream.InitTransport(stream.TransportOptions{
 		LocalAddress: DefaultConfig.Get().Client.Address,
@@ -26,7 +26,7 @@ func main() {
 
 	sc := app.NewServiceController()
 	opts := &stream.DialOptions{
-		Address:             DefaultConfig.Get().Registry.Address,
+		Address:             DefaultConfig.Get().Relay.Address,
 		Certificate:         DefaultConfig.Get().Client.Certificate,
 		PrivateKey:          DefaultConfig.Get().Client.PrivateKey,
 		ApplicationProtocol: "devkit",

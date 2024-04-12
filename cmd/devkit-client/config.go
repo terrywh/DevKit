@@ -12,7 +12,7 @@ import (
 
 var DefaultConfig *app.Config[ConfigPayload] = &app.Config[ConfigPayload]{}
 
-type ConfigPayloadRegistry struct {
+type ConfigPayloadRelay struct {
 	Address string `yaml:"address"`
 }
 
@@ -26,15 +26,15 @@ type ConfigPayloadServer struct {
 }
 
 type ConfigPayload struct {
-	Registry ConfigPayloadRegistry `yaml:"registry"`
-	Client   ConfigPayloadClient   `yaml:"client"`
-	Server   ConfigPayloadServer   `yaml:"server"`
+	Relay    ConfigPayloadRelay  `yaml:"relay"`
+	Client   ConfigPayloadClient `yaml:"client"`
+	Server   ConfigPayloadServer `yaml:"server"`
 	deviceID entity.DeviceID
 	cert     tls.Certificate
 }
 
 func (cp *ConfigPayload) InitFlag() {
-	flag.StringVar(&cp.Registry.Address, "registry.address", "42.193.117.122:18080", "注册呼叫服务")
+	flag.StringVar(&cp.Relay.Address, "relay.address", "42.193.117.122:18080", "注册呼叫服务")
 	flag.StringVar(&cp.Client.Address, "client.address", "0.0.0.0:18080", "客户及控制服务")
 	flag.StringVar(&cp.Client.Certificate, "client.certificate",
 		filepath.Join(app.GetBaseDir(), "var/cert/client.crt"), "服务证书公钥")

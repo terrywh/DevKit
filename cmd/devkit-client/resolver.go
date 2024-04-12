@@ -2,12 +2,12 @@ package main
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"github.com/quic-go/quic-go"
 	"github.com/terrywh/devkit/app"
 	"github.com/terrywh/devkit/entity"
+	"github.com/terrywh/devkit/infra"
 	"github.com/terrywh/devkit/stream"
 )
 
@@ -37,7 +37,7 @@ func (r *Resolver) Serve(ctx context.Context) {
 	peer := &entity.Server{
 		Address: r.options.Address,
 	}
-	log.Println("<DefaultConnectionProvider.Serve> started ...")
+	infra.Debug("<devkit-client> resolver started ...")
 SERVING:
 	for {
 		conn, peer.DeviceID, err = stream.DefaultTransport.Dial(ctx, &opts)
@@ -63,7 +63,7 @@ SERVING:
 			}
 		}
 	}
-	log.Println("<DefaultConnectionProvider.Serve> closed.")
+	infra.Debug("<devkit-client> resolver closed.")
 }
 
 func (r *Resolver) Resolve(ctx context.Context, peer *entity.Server) error {
@@ -108,6 +108,6 @@ func (rcd *ResolverCommandDial) Execute(ctx context.Context, peer *entity.Server
 		rcd.C <- r
 		return
 	}
-	r.E = app.Invoke(ctx, ss, "/registry/dial", rcd.P, r.P)
+	r.E = app.Invoke(ctx, ss, "/relay/dial", rcd.P, r.P)
 	rcd.C <- r
 }

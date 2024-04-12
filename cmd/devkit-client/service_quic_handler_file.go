@@ -3,12 +3,12 @@ package main
 import (
 	"context"
 	"io"
-	"log"
 	"os"
 
 	"github.com/ncruces/zenity"
 	"github.com/terrywh/devkit/app"
 	"github.com/terrywh/devkit/entity"
+	"github.com/terrywh/devkit/infra"
 	"github.com/terrywh/devkit/stream"
 )
 
@@ -43,9 +43,8 @@ func (handler *QuicFileHandler) HandlePull(ctx context.Context, src *stream.Sess
 	sf.Source.Perm = uint32(info.Mode().Perm())
 	sf.Source.Size = info.Size()
 
-	log.Println("<QuicFileHandler.HandlePull> streaming file: ", sf.Source.Path, sf.Source.Size, sf.Source.Perm)
+	infra.Debug("<devkit-client> streaming file: ", sf.Source.Path)
 	if err = handler.Respond(src, sf); err != nil {
-		log.Println("<FileHandler.HandlePull> failed to respond: ", err)
 		return
 	}
 

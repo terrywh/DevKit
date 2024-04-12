@@ -1,12 +1,12 @@
 package main
 
 import (
-	"log"
 	"sync"
 
 	"github.com/quic-go/quic-go"
 	"github.com/terrywh/devkit/app"
 	"github.com/terrywh/devkit/entity"
+	"github.com/terrywh/devkit/infra"
 )
 
 func newDiscoveryTracker() *ServiceQuicTracker {
@@ -33,7 +33,7 @@ func (dt *ServiceQuicTracker) GetConn(device_id entity.DeviceID) (conn quic.Conn
 }
 
 func (dt *ServiceQuicTracker) Enter(conn_id uint64, device_id entity.DeviceID, conn quic.Connection) {
-	log.Println("<ServiceQuicTracker.Enter> conn_id =", conn_id, " device_id =", device_id, ")")
+	infra.Debug("<devkit-relay> connection enter: device_id = ", device_id)
 	dt.mutex.Lock()
 	defer dt.mutex.Unlock()
 
@@ -49,14 +49,12 @@ func (dt *ServiceQuicTracker) Leave(conn_id uint64, device_id entity.DeviceID, c
 	if dc := dt.device[device_id]; dc == conn {
 		delete(dt.device, device_id)
 	}
-	log.Println("<ServiceQuicTracker.Leave> connection: ", conn_id)
+	infra.Debug("<devkit-relay> connection leave: device_id = ", device_id)
 }
 
 func (dt *ServiceQuicTracker) Close() error {
 	dt.mutex.Lock()
 	defer dt.mutex.Unlock()
-
-	log.Println("<DiscoveryTracker.Close> connection close.")
 	for _, conn := range dt.conn {
 		conn.CloseWithError(quic.ApplicationErrorCode(0), "close")
 	}

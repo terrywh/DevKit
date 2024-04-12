@@ -2,12 +2,12 @@ package main
 
 import (
 	"context"
-	"log"
 	"net"
 	"time"
 
 	"github.com/terrywh/devkit/app"
 	"github.com/terrywh/devkit/entity"
+	"github.com/terrywh/devkit/infra"
 	"github.com/terrywh/devkit/stream"
 )
 
@@ -17,7 +17,7 @@ type ServiceP2PHandler struct {
 
 func initServiceP2PHandler(mux *stream.ServeMux) {
 	handler := &ServiceP2PHandler{}
-	mux.HandleFunc("/registry/dial", handler.HandleDial)
+	mux.HandleFunc("/relay/dial", handler.HandleDial)
 }
 
 func (handler *ServiceP2PHandler) HandleDial(ctx context.Context, src *stream.SessionStream) {
@@ -26,7 +26,7 @@ func (handler *ServiceP2PHandler) HandleDial(ctx context.Context, src *stream.Se
 		handler.Respond(src, err)
 		return
 	}
-	log.Println("<ServiceP2PHandler.HandleDial> from: ", peer.DeviceID, peer.Address)
+	infra.Debug("<devkit-server> dial: ", peer.DeviceID, "(", peer.Address, ")")
 	if !onAuthorize(peer.DeviceID) {
 		handler.Respond(src, entity.ErrUnauthorized)
 		return
@@ -36,11 +36,12 @@ func (handler *ServiceP2PHandler) HandleDial(ctx context.Context, src *stream.Se
 	go func(ctx context.Context) {
 		data := []byte(peer.DeviceID)
 		addr, _ := net.ResolveUDPAddr("udp", peer.Address)
-		for i := 0; i < 9; i++ {
+		count := 9
+		for i := 0; i < count; i++ {
 			if ctx.Err() != nil {
 				break
 			}
-			log.Println(">>", peer.Address)
+			infra.Debug(">> ", peer.Address, " (", i+1, "/", count, ")")
 			stream.DefaultTransport.WriteTo(data, addr)
 			time.Sleep(5 * time.Second)
 		}

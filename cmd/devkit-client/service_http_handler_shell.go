@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
 	"sync"
 	"time"
@@ -12,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/terrywh/devkit/app"
 	"github.com/terrywh/devkit/entity"
+	"github.com/terrywh/devkit/infra"
 	"github.com/terrywh/devkit/stream"
 	"nhooyr.io/websocket"
 )
@@ -81,14 +81,14 @@ func (css *ShellHandler) HandleSocket(rsp http.ResponseWriter, req *http.Request
 	shell_id := entity.ShellID(req.PathValue("shell_id"))
 	e := css.get(shell_id)
 	if e == nil {
-		log.Println("<ServiceHttpShell.HandleSocket> unable to find shell")
+		infra.Warn("<devkit-client> unable to find shell:", shell_id)
 		return
 	}
 	defer css.del(e)
 	// 确认对应会话通道
 	dst, err := css.mgr.Acquire(ctx, &e.Server)
 	if err != nil {
-		log.Println("<ServiceHttpShell.HandleSocket> failed to acquire stream: ", err)
+		infra.Warn("<devkit-client> failed to acquire stream:", err)
 		return
 	}
 	defer dst.CloseRead()
@@ -98,7 +98,7 @@ func (css *ShellHandler) HandleSocket(rsp http.ResponseWriter, req *http.Request
 		Subprotocols: []string{"shell"},
 	})
 	if err != nil {
-		log.Println("<ServiceHttpShell.HandleSocket> failed to accept websocket: ", err)
+		infra.Warn("<devkit-client> failed to accept websocket:", err)
 		return
 	}
 	// 通道双向对转
@@ -152,14 +152,14 @@ func (css *ShellHandler) HandleResize(rsp http.ResponseWriter, req *http.Request
 	shell_id := entity.ShellID(req.PathValue("shell_id"))
 	e := css.get(shell_id)
 	if e == nil {
-		log.Println("<ServiceHttpShell.HandleSocket> unable to find shell")
+		infra.Warn("<devkit-client> unable to find shell:", shell_id)
 		css.Respond(rsp, entity.ErrSessionNotFound)
 		return
 	}
 	json.NewDecoder(req.Body).Decode(e)
 	ss, err := css.mgr.Acquire(ctx, &e.Server)
 	if err != nil {
-		log.Println("<ServiceHttpShell.HandleSocket> failed acquire session: ", err)
+		infra.Warn("<devkit-client> failed acquire session:", err)
 		css.Respond(rsp, err)
 		return
 	}

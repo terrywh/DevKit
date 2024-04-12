@@ -5,7 +5,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -13,6 +12,7 @@ import (
 	"github.com/schollz/progressbar/v3"
 	"github.com/terrywh/devkit/app"
 	"github.com/terrywh/devkit/entity"
+	"github.com/terrywh/devkit/infra"
 )
 
 type HandlerPull struct {
@@ -42,7 +42,7 @@ func (handler *HandlerPull) Do(ctx context.Context) (err error) {
 
 	// file, _ := os.Create("./pull.rst")
 	// defer file.Close()
-	// log.Println(io.Copy(file, rsp.Body))
+	// app.Debug(io.Copy(file, rsp.Body))
 	// return
 
 	x := entity.Response{Error: &entity.DefaultErrorCode{}, Data: &sf}
@@ -56,7 +56,7 @@ func (handler *HandlerPull) Do(ctx context.Context) (err error) {
 	sf.Target.Path = filepath.Join(wd, filepath.Base(sf.Source.Path))
 	sf.Options.Override = handler.override
 
-	log.Printf("<HandlePull.Do> StreamFile: %+v", sf)
+	infra.DebugContext(ctx, "<devkit> stream file:", sf.Source.Path)
 
 	proc := &app.StreamFile{Desc: &sf, Prog: prog}
 	err = proc.Do(ctx, r)

@@ -3,12 +3,13 @@ package app
 import (
 	"context"
 	"errors"
-	"log"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/terrywh/devkit/infra"
 )
 
 type Service interface {
@@ -50,7 +51,7 @@ func (sc *ServiceController) Start(svc Service) {
 var ErrShutdown = errors.New("shutdown")
 
 func (sc *ServiceController) Close() error {
-	log.Println("<ServiceController.Close> shutdown ...")
+	infra.Debug("<app> service controller shutdown ...")
 	for i := len(sc.running) - 1; i >= 0; i-- {
 		sr := sc.running[i]
 		sr.cancel(ErrShutdown)

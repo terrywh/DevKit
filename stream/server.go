@@ -2,10 +2,10 @@ package stream
 
 import (
 	"context"
-	"log"
 
 	"github.com/quic-go/quic-go"
 	"github.com/terrywh/devkit/entity"
+	"github.com/terrywh/devkit/infra"
 )
 
 type Server struct {
@@ -34,7 +34,7 @@ func NewServer(options *ServerOptions) (svr *Server, err error) {
 
 func (svr *Server) Serve(ctx context.Context) {
 	defer svr.listener.Close()
-	log.Println("<Server.Serve> accepting... ")
+	infra.Debug("<stream> server started: ", &svr)
 SERVING:
 	for {
 		conn, err := svr.listener.Accept(ctx)
@@ -43,7 +43,7 @@ SERVING:
 		}
 		go svr.handler.ServeConn(ctx, conn)
 	}
-	log.Println("<Server.Serve> closed.")
+	infra.Debug("<stream> server closed: ", &svr)
 }
 
 func (svr *Server) Close() error {

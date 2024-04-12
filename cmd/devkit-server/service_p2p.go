@@ -12,7 +12,7 @@ func newP2PService() (svc *stream.Client) {
 			Handler: mux,
 		},
 		DialOptions: stream.DialOptions{
-			Address:             DefaultConfig.Get().Registry.Address,
+			Address:             DefaultConfig.Get().Relay.Address,
 			Certificate:         DefaultConfig.Get().Server.Certificate,
 			PrivateKey:          DefaultConfig.Get().Server.PrivateKey,
 			ApplicationProtocol: "devkit",

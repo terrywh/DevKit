@@ -4,7 +4,6 @@
     import { sshEntry } from "./store.js";
 
     const dispatch = createEventDispatcher();
-    // const dispatch = console.log.bind(console);
     let { filter = $bindable("") } = $props();
 
     function onSelect(index, e) {

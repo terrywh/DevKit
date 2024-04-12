@@ -6,12 +6,12 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"log"
 	"net"
 	"time"
 
 	quic "github.com/quic-go/quic-go"
 	"github.com/terrywh/devkit/entity"
+	"github.com/terrywh/devkit/infra"
 )
 
 func DeviceIDFromCert(cert []byte) entity.DeviceID {
@@ -130,7 +130,7 @@ func (tr *Transport) Dial(ctx context.Context, options *DialOptions) (conn quic.
 		if err = ctx.Err(); err != nil {
 			break
 		}
-		log.Println("->", options.Address, i, "/", options.Retry)
+		infra.Debug("-> ", options.Address, "(", i+1, "/", options.Retry, ")")
 		if conn, device_id, err = tr.dial(ctx, options); err == nil && conn != nil {
 			break
 		}

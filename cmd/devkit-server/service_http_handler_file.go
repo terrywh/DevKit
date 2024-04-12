@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/terrywh/devkit/app"
 	"github.com/terrywh/devkit/entity"
+	"github.com/terrywh/devkit/infra"
 	"github.com/terrywh/devkit/stream"
 )
 
@@ -65,6 +65,6 @@ func (handler *FileHandler) HandlePull(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if err != nil {
-		log.Println("<HttpFileHandler.HandlePull> failed to stream file:", err)
+		infra.Debug("<devkit-server> failed to stream file:", err)
 	}
 }

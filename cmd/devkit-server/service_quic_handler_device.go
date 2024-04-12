@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"runtime"
 
 	"github.com/terrywh/devkit/app"
@@ -27,7 +26,6 @@ func initDeviceHandler(mux *stream.ServeMux) *DeviceHandler {
 }
 
 func (hss *DeviceHandler) HandleQuery(ctx context.Context, ss *stream.SessionStream) {
-	log.Println("<SystemHandler.HandleQuery> device =", ss.RemotePeer().DeviceID)
 	hss.Respond(ss, entity.Server{
 		DeviceID: DefaultConfig.Get().DeviceID(),
 		System:   runtime.GOOS,

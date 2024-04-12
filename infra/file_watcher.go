@@ -2,7 +2,6 @@ package infra
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"github.com/fsnotify/fsnotify"
@@ -27,7 +26,7 @@ func (cw *FileWatcher) Add(file FileToWatch) {
 }
 
 func (cw *FileWatcher) Serve(ctx context.Context) {
-	log.Println("<FileWatcher.Serve> starting ...")
+	Debug("<infra> file watcher started:", &cw)
 	ticker := time.NewTicker(3 * time.Second)
 	defer ticker.Stop()
 SERVING:
@@ -50,7 +49,7 @@ SERVING:
 		}
 	}
 	cw.watcher.Close()
-	log.Println("<FileWatcher.Serve> closed.")
+	Debug("<infra> file watcher closed:", &cw)
 }
 
 func (cw *FileWatcher) Close() (err error) {

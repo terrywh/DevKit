@@ -1,10 +1,8 @@
-// import { compile } from "https://esm.sh/svelte@4.2.9/compiler";
-// import { compile } from "npm:svelte/compiler";
 import { compile } from "svelte/compiler";
-import { join, extname } from "node:path";
+import { join, extname, dirname } from "node:path";
+import { copyFile, mkdir, open, readFile, readdir, stat, writeFile } from "node:fs/promises";
 
-
-async function map() {
+async function createImportMap() {
     // {
     //     "imports": {
     //         "svelte": "/node_modules/svelte/src/runtime/index.js",
@@ -12,7 +10,7 @@ async function map() {
     //         "svelte/internal/disclose-version": "/node_modules/svelte/src/runtime/internal/disclose-version/index.js"
     //     }
     // }
-    const desc = JSON.parse(await Deno.readTextFile("./node_modules/svelte/package.json"));
+    const desc = await Bun.file("./node_modules/svelte/package.json").json();
     const map = {imports: {}};
     for (const entry in desc.exports) {
         const value = desc.exports[entry];
@@ -22,43 +20,45 @@ async function map() {
         }
     }
     map.imports["esm-env"] = "/node_modules/esm-env/prod-browser.js";
-    map.imports["xterm"] = "/node_modules/xterm/lib/xterm.js";
-    map.imports["xterm-addon-webgl"] = "/node_modules/xterm-addon-webgl/lib/xterm-addon-webgl.js";
-    map.imports["xterm-addon-fit"] = "/node_modules/xterm-addon-fit/lib/xterm-addon-fit.js";
+    // map.imports["xterm"] = "/node_modules/xterm/lib/xterm.js";
+    // map.imports["xterm-addon-webgl"] = "/node_modules/xterm-addon-webgl/lib/xterm-addon-webgl.js";
+    // map.imports["xterm-addon-fit"] = "/node_modules/xterm-addon-fit/lib/xterm-addon-fit.js";
     // map.imports["trzsz"] = "/node_modules/trzsz/lib/trzsz.mjs";
-    return map;
+    return new TextEncoder().encode(`\n        <script type="importmap">\n${JSON.stringify(map, null, "   ")}\n        </script>\n`)
 }
 
 async function build(src, dst, map) {
-    for await (const entry of Deno.readDir(src)) {
-        const source = join(src, entry.name);
-        const target = join(dst, entry.name);
-        if (entry.isDirectory) {
-            await Deno.mkdir(target, {recursive: true});
-            await build(source, target, map);
-        } else if (entry.name.endsWith(".svelte") || entry.name.endsWith(".svelte.js")) {
-            const file = await Deno.readFile(source);
+    for (const name of await readdir(src, {recursive: true})) {
+        const source = join(src, name);
+        const target = join(dst, name);
+        
+        const sourceStat = await stat(source);
+        if (sourceStat.isDirectory()) continue;
+
+        await mkdir(dirname(target), {recursive: true});
+        console.log(source, target);
+
+        if (source.endsWith(".svelte") || source.endsWith(".svelte.js")) {
+            const file = await readFile(source);
             const m = compile(new TextDecoder().decode(file), {
                 dev: true,
                 css: "injected",
             });
-            await Deno.writeTextFile(target, m.js.code);
-        } else if (".html" === extname(entry.name)) {
-            const fs = await Deno.open(source, {"read": true});
-            const ft = await Deno.open(target, {"create": true, "write": true, "truncate": true});
-            const w = await ft.writable.getWriter();
-            await w.write(map);
-            // await w.close();
-            w.releaseLock()
-            await fs.readable.pipeTo(ft.writable);
-            // fs.close();
-            // ft.close();
+            
+            await writeFile(target, m.js.code);
+        } else if (extname(source) == ".html") {
+            const file = await readFile(source);
+            const x = file.indexOf("<head>");
+            const dst = await open(target, "w");
+            await dst.write(file.subarray(0, x + 6));
+            await dst.write(map);
+            await dst.write(file.subarray(x + 6));
+            await dst.close();
         } else {
-            await Deno.copyFile(source, target);
+            await copyFile(source, target);
         }
     }
 }
 
-await build("./www", "./public",
-    new TextEncoder().encode(`<!DOCTYPE html><script type="importmap">${JSON.stringify(await map())}</script>\n`));
-console.log("done.");
+await build("./www", "./public", await createImportMap());
+console.timeEnd("build");

@@ -2,10 +2,10 @@ package stream
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"github.com/quic-go/quic-go"
+	"github.com/terrywh/devkit/infra"
 )
 
 type Client struct {
@@ -43,7 +43,7 @@ SERVING:
 			break SERVING
 		}
 		if err != nil {
-			log.Println("<Client.Serve> failed to dial registry: ", err)
+			infra.Warn("<stream> failed to dial relay: ", err)
 			continue
 		}
 		cli.handler.ServeConn(ctx, conn)

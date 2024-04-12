@@ -2,11 +2,11 @@ package stream
 
 import (
 	"context"
-	"log"
 	"sync"
 
 	"github.com/quic-go/quic-go"
 	"github.com/terrywh/devkit/entity"
+	"github.com/terrywh/devkit/infra"
 )
 
 type SessionManager interface {
@@ -87,7 +87,7 @@ func (mgr *DefaultSessionManager) EnsureConn(ctx context.Context, peer *entity.S
 		if err = mgr.resolver.Resolve(ctx, peer); err != nil {
 			return
 		}
-		log.Println("<DefaultSessionManager.EnsureConn> peer: ", peer.Address)
+		infra.Debug("<stream> device address resolved: ", peer.Address)
 	}
 	// 建立新会话
 	if conn, err = mgr.provider.Acquire(ctx, peer); err != nil {
@@ -95,14 +95,11 @@ func (mgr *DefaultSessionManager) EnsureConn(ctx context.Context, peer *entity.S
 	}
 	mgr.put(peer, conn)
 	go func(conn quic.Connection, peer entity.Server, handler ConnectionHandler) {
-		// log.Println("<SessionManager.Acquire> connection: ", peer.DeviceID, peer.Address, " started ...")
 		if handler != nil {
 			handler.ServeConn(context.Background(), conn)
 		} else {
 			<-conn.Context().Done() // 监听链接持续时间
 		}
-		// log.Println("<SessionManager.Acquire> connection: ", peer.DeviceID, peer.Address, " closed.")
-
 		conn.CloseWithError(quic.ApplicationErrorCode(0), "close")
 		mgr.del(&peer, conn)
 	}(conn, *peer, mgr.handler)

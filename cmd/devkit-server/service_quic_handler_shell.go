@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"io"
-	"log"
 	"sync"
 
 	"github.com/quic-go/quic-go"
@@ -71,7 +70,6 @@ func (h *ShellHandler) find(pid int) *ServerShell {
 }
 
 func (hss *ShellHandler) HandleStart(ctx context.Context, src *stream.SessionStream) {
-	log.Println("<ServiceQuicHandlerShell.HandleStart> device =", src.RemotePeer().DeviceID)
 	var err error
 	e := &ServerShell{}
 	if err = app.ReadJSON(src.Reader(), &e); err != nil {
@@ -82,13 +80,13 @@ func (hss *ShellHandler) HandleStart(ctx context.Context, src *stream.SessionStr
 
 	e.cpty, err = infra.StartPty(ctx, e.Rows, e.Cols, e.ShellCmd[0], e.ShellCmd[1:]...)
 	if err != nil {
-		log.Println("<HandlerServerShell.HandleStream> failed to open pty shell: ", err)
+		infra.Warn("<devkit-server> failed to start shell (start): ", err)
 		hss.Respond(src, err)
 		return
 	}
 	defer e.cpty.Close()
 
-	log.Println("<ServerShellHandler> shell: ", &e.cpty, " started ...")
+	infra.Debug("<devkit-server> shell started: ", &e.cpty)
 	wg := &sync.WaitGroup{}
 	wg.Add(2)
 	go func() {
@@ -109,7 +107,7 @@ func (hss *ShellHandler) HandleStart(ctx context.Context, src *stream.SessionStr
 	wg.Wait()
 
 	hss.del(e)
-	log.Println("<ServerShellHandler> shell: ", &e.cpty, " closed.")
+	infra.Debug("<devkit-server> shell closed: ", &e.cpty)
 }
 
 func (hss *ShellHandler) HandleResize(ctx context.Context, src *stream.SessionStream) {
@@ -127,7 +125,6 @@ func (hss *ShellHandler) HandleResize(ctx context.Context, src *stream.SessionSt
 	e2.Cols = e1.Cols
 	e2.Rows = e1.Rows
 	if err := e2.cpty.Resize(e2.Cols, e2.Rows); err != nil {
-		log.Println("<ServerShellHandler.HandleResize> failed to resize cpty: ", err)
 		hss.Respond(src, err)
 		return
 	}

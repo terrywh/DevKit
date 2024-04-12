@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 
@@ -68,7 +67,7 @@ func (s *StreamFile) Do(ctx context.Context, src io.Reader) (err error) {
 		return
 	}
 	if err = os.Chmod(dst.Name(), os.FileMode(s.Desc.Source.Perm)); err != nil {
-		log.Println("failed to stream file (perm): ", err)
+		infra.Warn("<app> failed to stream file (perm): ", err)
 		err = nil
 	}
 

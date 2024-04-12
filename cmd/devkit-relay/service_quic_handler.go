@@ -2,11 +2,11 @@ package main
 
 import (
 	"context"
-	"log"
 
 	"github.com/quic-go/quic-go"
 	"github.com/terrywh/devkit/app"
 	"github.com/terrywh/devkit/entity"
+	"github.com/terrywh/devkit/infra"
 	"github.com/terrywh/devkit/stream"
 )
 
@@ -16,7 +16,7 @@ type ConnectionTracker interface {
 
 func initServiceQuicHandler(mux *stream.ServeMux, tracker ConnectionTracker) {
 	handler := &ServiceQuicHandler{tracker: tracker}
-	mux.HandleFunc("/registry/dial", handler.HandleDial)
+	mux.HandleFunc("/relay/dial", handler.HandleDial)
 }
 
 type ServiceQuicHandler struct {
@@ -30,9 +30,9 @@ func (handler *ServiceQuicHandler) HandleDial(ctx context.Context, src *stream.S
 		handler.Respond(src, err)
 		return
 	}
-	log.Println("<ServiceQuicHandler.HandleDial> server: ", server.DeviceID, " client: ", src.RemotePeer().DeviceID)
-
 	client := src.RemotePeer()
+	infra.Debug("<devkit-relay> dail ", client.DeviceID, "(", client.Address, ") => ", server.DeviceID, "(", server.Address, ")")
+
 	// P2P 建连：
 	// 1. 要求 SERVER 向本测 CLIENT (ss.RemoteAddress()) 发送数据包打洞
 	err := handler.dial1RelayToServer(ctx, &server, client)
@@ -57,6 +57,6 @@ func (handler *ServiceQuicHandler) dial1RelayToServer(ctx context.Context,
 	if err != nil {
 		return
 	}
-	err = app.Invoke(ctx, src, "/registry/dial", client, nil)
+	err = app.Invoke(ctx, src, "/relay/dial", client, nil)
 	return
 }
