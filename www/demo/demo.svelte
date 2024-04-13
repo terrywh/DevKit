@@ -15,7 +15,7 @@
 		} else if(ua.match(/edg/i)){
 			name = "Edge";
 		} else {
-			name = "<other>";
+			name = "Unknown";
 		}
 		return name;
 	}

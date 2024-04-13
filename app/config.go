@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"sync/atomic"
 
-	"github.com/terrywh/devkit/infra"
+	"github.com/terrywh/devkit/infra/log"
 	"gopkg.in/yaml.v3"
 )
 
@@ -80,7 +80,7 @@ func (c *Config[T]) Get() *T {
 }
 
 func (c *Config[T]) Reload() {
-	infra.Debug("<app> config reload: ", c.path)
+	log.Trace("<app> config reload: ", c.path)
 	cp := *c.payload.Load()      // 保留当前值
 	UnmarshalConfig(c.path, &cp) // 覆盖
 	c.payload.Store(&cp)

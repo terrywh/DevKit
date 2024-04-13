@@ -7,7 +7,7 @@ import (
 	"github.com/quic-go/quic-go"
 	"github.com/terrywh/devkit/app"
 	"github.com/terrywh/devkit/entity"
-	"github.com/terrywh/devkit/infra"
+	"github.com/terrywh/devkit/infra/log"
 	"github.com/terrywh/devkit/stream"
 )
 
@@ -37,7 +37,7 @@ func (r *Resolver) Serve(ctx context.Context) {
 	peer := &entity.Server{
 		Address: r.options.Address,
 	}
-	infra.Debug("<devkit-client> resolver started ...")
+	log.Trace("<devkit-client> resolver started ...")
 SERVING:
 	for {
 		conn, peer.DeviceID, err = stream.DefaultTransport.Dial(ctx, &opts)
@@ -63,7 +63,7 @@ SERVING:
 			}
 		}
 	}
-	infra.Debug("<devkit-client> resolver closed.")
+	log.Trace("<devkit-client> resolver closed.")
 }
 
 func (r *Resolver) Resolve(ctx context.Context, peer *entity.Server) error {

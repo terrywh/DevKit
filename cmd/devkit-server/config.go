@@ -28,16 +28,22 @@ type ConfigPayloadServer struct {
 	Authorized  util.StringList `yaml:"authorized"`
 }
 
+type ConfigPayloadLog struct {
+	Level string `yaml:"level"`
+}
+
 type ConfigPayload struct {
 	Relay  ConfigPayloadRelay  `yaml:"relay"`
 	Client ConfigPayloadClient `yaml:"client"`
 	Server ConfigPayloadServer `yaml:"server"`
 
+	Log      ConfigPayloadLog `yaml:"log"`
 	cert     tls.Certificate
 	deviceID entity.DeviceID
 }
 
 func (cp *ConfigPayload) InitFlag() {
+	flag.StringVar(&cp.Log.Level, "log.level", "info", "日志级别: trace / debug / info / warn / error / fatal")
 	flag.StringVar(&cp.Relay.Address, "relay.address", "42.193.117.122:18080", "注册呼叫服务")
 	flag.StringVar(&cp.Client.Address, "client.address", "127.0.0.1:18080", "客户及控制服务")
 	flag.StringVar(&cp.Server.Address, "server.address", "0.0.0.0:18080", "服务监听")

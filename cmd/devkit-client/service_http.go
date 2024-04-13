@@ -19,7 +19,7 @@ func newServiceHttp(mgr stream.SessionManager, mux *stream.ServeMux) (s *HttpSer
 	initHttpShellHandler(mgr, s.mux)
 	initHttpFileHandler(mgr, s.mux)
 	s.mux.Handle("/node_modules/", http.FileServer(http.Dir(".")))
-	s.mux.Handle("/", http.FileServer(http.Dir("www")))
+	s.mux.Handle("/", http.FileServer(http.Dir("public")))
 	return
 }
 

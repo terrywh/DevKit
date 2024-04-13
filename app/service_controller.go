@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/terrywh/devkit/infra"
+	"github.com/terrywh/devkit/infra/log"
 )
 
 type Service interface {
@@ -51,7 +51,7 @@ func (sc *ServiceController) Start(svc Service) {
 var ErrShutdown = errors.New("shutdown")
 
 func (sc *ServiceController) Close() error {
-	infra.Debug("<app> service controller shutdown ...")
+	log.Trace("<app> service controller shutdown ...")
 	for i := len(sc.running) - 1; i >= 0; i-- {
 		sr := sc.running[i]
 		sr.cancel(ErrShutdown)

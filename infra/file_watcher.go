@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/fsnotify/fsnotify"
+	"github.com/terrywh/devkit/infra/log"
 )
 
 type FileToWatch interface {
@@ -26,7 +27,7 @@ func (cw *FileWatcher) Add(file FileToWatch) {
 }
 
 func (cw *FileWatcher) Serve(ctx context.Context) {
-	Debug("<infra> file watcher started:", &cw)
+	log.Trace("<infra> file watcher started:", &cw)
 	ticker := time.NewTicker(3 * time.Second)
 	defer ticker.Stop()
 SERVING:
@@ -49,7 +50,7 @@ SERVING:
 		}
 	}
 	cw.watcher.Close()
-	Debug("<infra> file watcher closed:", &cw)
+	log.Trace("<infra> file watcher closed:", &cw)
 }
 
 func (cw *FileWatcher) Close() (err error) {

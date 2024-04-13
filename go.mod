@@ -10,10 +10,10 @@ require (
 	github.com/fatih/color v1.16.0
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/google/uuid v1.6.0
+	github.com/mitchellh/go-ps v1.0.0
 	github.com/ncruces/zenity v0.10.12
 	github.com/quic-go/quic-go v0.42.0
 	github.com/schollz/progressbar/v3 v3.14.2
-	github.com/webview/webview_go v0.0.0-20240220051247-56f456ca3a43
 	golang.org/x/crypto v0.17.0
 	golang.org/x/sys v0.17.0
 	golang.org/x/term v0.17.0

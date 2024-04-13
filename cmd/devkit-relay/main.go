@@ -20,12 +20,12 @@ func main() {
 	defer stream.DefaultTransport.Close()
 
 	sc := app.NewServiceController()
+	defer sc.Close()
+
 	fw := infra.NewFileWatcher()
 	fw.Add(DefaultConfig)
 	sc.Start(fw)
-
 	sc.Start(newQuicService())
 
 	sc.WaitForSignal()
-	sc.Close()
 }

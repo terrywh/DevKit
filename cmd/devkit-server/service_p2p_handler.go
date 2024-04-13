@@ -7,7 +7,7 @@ import (
 
 	"github.com/terrywh/devkit/app"
 	"github.com/terrywh/devkit/entity"
-	"github.com/terrywh/devkit/infra"
+	"github.com/terrywh/devkit/infra/log"
 	"github.com/terrywh/devkit/stream"
 )
 
@@ -26,7 +26,7 @@ func (handler *ServiceP2PHandler) HandleDial(ctx context.Context, src *stream.Se
 		handler.Respond(src, err)
 		return
 	}
-	infra.Debug("<devkit-server> dial: ", peer.DeviceID, "(", peer.Address, ")")
+	log.Info("<devkit-server> dial: ", peer.DeviceID, "(", peer.Address, ")")
 	if !onAuthorize(peer.DeviceID) {
 		handler.Respond(src, entity.ErrUnauthorized)
 		return
@@ -41,7 +41,7 @@ func (handler *ServiceP2PHandler) HandleDial(ctx context.Context, src *stream.Se
 			if ctx.Err() != nil {
 				break
 			}
-			infra.Debug(">> ", peer.Address, " (", i+1, "/", count, ")")
+			log.Trace(">> ", peer.Address, " (", i+1, "/", count, ")")
 			stream.DefaultTransport.WriteTo(data, addr)
 			time.Sleep(5 * time.Second)
 		}

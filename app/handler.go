@@ -1,6 +1,7 @@
 package app
 
 import (
+	"bufio"
 	"encoding/json"
 	"errors"
 	"io"
@@ -48,5 +49,17 @@ func (StreamHandlerBase) Respond(w io.Writer, data interface{}) (reply error) {
 			Code: entity.ErrUnknown.Code, Info: top.Error(),
 		},
 	})
+	return
+}
+
+func Read(body *bufio.Reader, data interface{}) (err error) {
+	x := entity.Response{Error: &entity.DefaultErrorCode{}, Data: data}
+	if err = ReadJSON(body, &x); err != nil {
+		return
+	}
+	if x.Error.Code != 0 {
+		err = x.Error
+		return
+	}
 	return
 }

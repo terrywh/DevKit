@@ -6,25 +6,27 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/terrywh/devkit/app"
 	"github.com/terrywh/devkit/entity"
-	"github.com/terrywh/devkit/infra"
+	"github.com/terrywh/devkit/infra/log"
 	"github.com/terrywh/devkit/stream"
 )
 
-type FileHandler struct {
+type HttpFileHandler struct {
 	app.HttpHandlerBase
 }
 
-func initFileHandler(mux *http.ServeMux) *FileHandler {
-	handler := &FileHandler{}
+func initHttpFileHandler(mux *http.ServeMux) *HttpFileHandler {
+	handler := &HttpFileHandler{}
 	mux.HandleFunc("/file/pull", handler.HandlePull)
+	mux.HandleFunc("/file/push", handler.HandlePush)
 	return handler
 }
 
-func (handler *FileHandler) HandlePull(w http.ResponseWriter, r *http.Request) {
+func (handler *HttpFileHandler) HandlePull(w http.ResponseWriter, r *http.Request) {
 	bash_id, _ := strconv.ParseUint(r.URL.Query().Get("bash_id"), 10, 32)
 	shell := DefaultShellHandler.find(int(bash_id))
 	if shell == nil {
@@ -33,7 +35,7 @@ func (handler *FileHandler) HandlePull(w http.ResponseWriter, r *http.Request) {
 	}
 	src, err := stream.NewSessionStream(&shell.Server, shell.conn)
 	if err != nil {
-		handler.Respond(w, fmt.Errorf("failed to create stream: %w", err))
+		handler.Respond(w, fmt.Errorf("stream file (conn): %w", err))
 		return
 	}
 	defer src.CloseRead()
@@ -41,17 +43,17 @@ func (handler *FileHandler) HandlePull(w http.ResponseWriter, r *http.Request) {
 
 	sf := entity.StreamFile{}
 	if err = json.NewDecoder(r.Body).Decode(&sf); err != nil {
-		handler.Respond(w, fmt.Errorf("failed to decode request body: %w", err))
+		handler.Respond(w, fmt.Errorf("stream file (req): %w", err))
 		return
 	}
 	io.WriteString(src, "/file/pull:")
 	if err = app.SendJSON(src, sf); err != nil {
-		handler.Respond(w, fmt.Errorf("failed to send json: %w", err))
+		handler.Respond(w, fmt.Errorf("stream file (req): %w", err))
 		return
 	}
 	rsp := entity.Response{Error: &entity.DefaultErrorCode{}, Data: &sf}
 	if err = app.ReadJSON(src.Reader(), &rsp); err != nil {
-		handler.Respond(w, fmt.Errorf("failed to read json: %w", err))
+		handler.Respond(w, fmt.Errorf("stream file (rsp): %w", err))
 		return
 	}
 	handler.Respond(w, sf)
@@ -65,6 +67,53 @@ func (handler *FileHandler) HandlePull(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if err != nil {
-		infra.Debug("<devkit-server> failed to stream file:", err)
+		log.Warn("<devkit-server> failed to stream file:", err)
 	}
+}
+
+func (handler *HttpFileHandler) HandlePush(w http.ResponseWriter, r *http.Request) {
+	bash_id, _ := strconv.ParseUint(r.URL.Query().Get("bash_id"), 10, 32)
+	shell := DefaultShellHandler.find(int(bash_id))
+	if shell == nil {
+		handler.Respond(w, entity.ErrSessionNotFound)
+		return
+	}
+	src, err := stream.NewSessionStream(&shell.Server, shell.conn)
+	if err != nil {
+		handler.Respond(w, fmt.Errorf("stream file (conn): %w", err))
+		return
+	}
+	defer src.CloseRead()
+	defer src.CloseWrite()
+
+	size, _ := strconv.ParseInt(r.URL.Query().Get("size"), 10, 64)
+	perm, _ := strconv.ParseUint(r.URL.Query().Get("perm"), 8, 32)
+	sf := entity.StreamFile{
+		Source: entity.File{
+			Path: r.URL.Query().Get("path"),
+			Size: int64(size),
+			Perm: uint32(perm),
+		},
+	}
+	log.Info("<devkit-server> stream file:", sf.Source.Path)
+	io.WriteString(src, "/file/push:")
+	if err = app.SendJSON(src, sf); err != nil {
+		handler.Respond(w, fmt.Errorf("stream file (req): %w", err))
+		return
+	}
+	var file *os.File
+	if file, err = os.Open(sf.Source.Path); err != nil {
+		handler.Respond(w, fmt.Errorf("stream file (file): %w", err))
+		return
+	}
+	if size, err = io.Copy(src, file); err != nil || size != sf.Source.Size {
+		handler.Respond(w, fmt.Errorf("stream file (copy): %w", entity.ErrFileCorrupted))
+		return
+	}
+	src.CloseWrite() // 文件发送完毕
+	if err = app.Read(src.Reader(), &sf); err != nil {
+		handler.Respond(w, fmt.Errorf("stream file (rsp): %w", err))
+		return
+	}
+	handler.Respond(w, nil)
 }

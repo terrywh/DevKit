@@ -13,13 +13,8 @@ type ConnectionProvider interface {
 	Acquire(ctx context.Context, peer *entity.Server) (quic.Connection, error)
 }
 
-type ConnectionProviderCommand interface {
-	Execute(ctx context.Context, peer *entity.Server, conn quic.Connection)
-}
-
 type DefaultConnectionProvider struct {
 	options DialOptions
-	cmd     chan ConnectionProviderCommand
 }
 
 func newDefaultConnectionProvider(options *DialOptions) (dp *DefaultConnectionProvider) {
@@ -28,7 +23,6 @@ func newDefaultConnectionProvider(options *DialOptions) (dp *DefaultConnectionPr
 	}
 	dp = &DefaultConnectionProvider{
 		options: *options,
-		cmd:     make(chan ConnectionProviderCommand),
 	}
 	if dp.options.Backoff < time.Second {
 		dp.options.Backoff = 2400 * time.Millisecond

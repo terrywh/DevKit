@@ -5,7 +5,7 @@ import (
 
 	"github.com/quic-go/quic-go"
 	"github.com/terrywh/devkit/entity"
-	"github.com/terrywh/devkit/infra"
+	"github.com/terrywh/devkit/infra/log"
 )
 
 type ConnectionTracker interface {
@@ -27,7 +27,7 @@ func NewDefaultConnectionTracker() ConnectionTracker {
 }
 
 func (st *DefaultConnectionTracker) Enter(conn_id uint64, device_id entity.DeviceID, conn quic.Connection) {
-	infra.Debug("<stream> connection enter: device_id = ", device_id)
+	log.Trace("<stream> connection enter: device_id = ", device_id)
 	st.mutex.Lock()
 	defer st.mutex.Unlock()
 
@@ -39,7 +39,7 @@ func (st *DefaultConnectionTracker) Leave(conn_id uint64, device_id entity.Devic
 	defer st.mutex.Unlock()
 
 	delete(st.conn, conn_id)
-	infra.Debug("<stream> connection leave: device_id = ", device_id)
+	log.Trace("<stream> connection leave: device_id = ", device_id)
 }
 
 func (st *DefaultConnectionTracker) Close() error {

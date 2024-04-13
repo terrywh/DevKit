@@ -7,6 +7,7 @@ import (
 	"github.com/terrywh/devkit/app"
 	"github.com/terrywh/devkit/infra"
 	"github.com/terrywh/devkit/infra/color"
+	"github.com/terrywh/devkit/infra/log"
 	"github.com/terrywh/devkit/stream"
 )
 
@@ -17,6 +18,7 @@ func main() {
 	fw.Add(DefaultConfig)
 	flag.Parse()
 
+	log.DefaultLogger.SetLevel(log.LevelFromString(DefaultConfig.Get().Log.Level))
 	color.Info("DeviceID: ", DefaultConfig.Get().DeviceID(), "\n")
 
 	stream.InitTransport(stream.TransportOptions{
@@ -25,6 +27,8 @@ func main() {
 	defer stream.DefaultTransport.Close()
 
 	sc := app.NewServiceController()
+	defer sc.Close()
+	// go func() {
 	opts := &stream.DialOptions{
 		Address:             DefaultConfig.Get().Relay.Address,
 		Certificate:         DefaultConfig.Get().Client.Certificate,
@@ -44,5 +48,9 @@ func main() {
 	sc.Start(mgr)
 	sc.Start(newServiceHttp(mgr, mux))
 	sc.WaitForSignal()
-	sc.Close()
+	// }()
+	// 必须在主线程运行
+	// wv := newServiceWebview()
+	// defer wv.Close()
+	// wv.Serve(context.Background())
 }

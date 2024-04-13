@@ -7,6 +7,7 @@ import (
 	"github.com/terrywh/devkit/app"
 	"github.com/terrywh/devkit/infra"
 	"github.com/terrywh/devkit/infra/color"
+	"github.com/terrywh/devkit/infra/log"
 	"github.com/terrywh/devkit/stream"
 )
 
@@ -17,6 +18,7 @@ func main() {
 	fw.Add(DefaultConfig)
 	flag.Parse()
 
+	log.DefaultLogger.SetLevel(log.LevelFromString(DefaultConfig.Get().Log.Level))
 	color.Info("DeviceID: ", DefaultConfig.Get().DeviceID(), "\n")
 
 	stream.InitTransport(stream.TransportOptions{
@@ -25,6 +27,7 @@ func main() {
 	defer stream.DefaultTransport.Close()
 
 	sc := app.NewServiceController()
+	defer sc.Close()
 	sc.Start(fw)
 	sc.Start(newQuicService())
 	sc.Start(newHttpService())
@@ -32,5 +35,4 @@ func main() {
 		sc.Start(newP2PService())
 	}
 	sc.WaitForSignal()
-	sc.Close()
 }

@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/quic-go/quic-go"
-	"github.com/terrywh/devkit/infra"
+	"github.com/terrywh/devkit/infra/log"
 )
 
 type Client struct {
@@ -43,7 +43,7 @@ SERVING:
 			break SERVING
 		}
 		if err != nil {
-			infra.Warn("<stream> failed to dial relay: ", err)
+			log.Warn("<stream> failed to dial relay: ", err)
 			continue
 		}
 		cli.handler.ServeConn(ctx, conn)

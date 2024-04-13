@@ -17,7 +17,7 @@ type UnixPseudo struct {
 	file *os.File
 }
 
-func (up UnixPseudo) Read(recv []byte) (int, error) {
+func (up UnixPseudo) Read(recv []byte) (n int, err error) {
 	return up.file.Read(recv)
 }
 

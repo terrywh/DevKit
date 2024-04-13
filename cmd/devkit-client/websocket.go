@@ -1,60 +1,82 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"io"
+	"time"
 
+	"github.com/terrywh/devkit/infra/log"
 	"nhooyr.io/websocket"
 )
 
-type WebsocketReader struct {
+type Websocket struct {
 	ctx  context.Context
 	conn *websocket.Conn
-	r    *io.PipeReader
+
+	rr *io.PipeReader
+	rw *io.PipeWriter
+	rb *bufio.Writer
 }
 
-func NewWebSocketReader(ctx context.Context, conn *websocket.Conn) io.Reader {
-	wsr := &WebsocketReader{ctx: ctx, conn: conn}
-	var w *io.PipeWriter
-	wsr.r, w = io.Pipe()
-	go func(w *io.PipeWriter) {
-		var err error
-		var data []byte
-		for {
-			if _, data, err = conn.Read(ctx); err != nil {
-				break
-			}
-			if _, err = w.Write(data); err != nil {
-				break
-			}
-		}
-		w.CloseWithError(err)
-	}(w)
+func NewWebsocket(ctx context.Context, conn *websocket.Conn) *Websocket {
+	wsr := &Websocket{ctx: ctx, conn: conn}
+	wsr.rr, wsr.rw = io.Pipe()
+	wsr.rb = bufio.NewWriter(wsr.rw)
+
+	ctx, cancel := context.WithCancel(ctx)
+	go wsr.flush(ctx)
+	go wsr.read(ctx, cancel)
 	return wsr
 }
 
-// Read io.Reader
-func (wsr *WebsocketReader) Read(data []byte) (n int, err error) {
-	return wsr.r.Read(data)
-}
-
-type WebsocketWriter struct {
-	ctx  context.Context
-	conn *websocket.Conn
-}
-
-func NewWebSocketWriter(ctx context.Context, conn *websocket.Conn) *WebsocketWriter {
-	return &WebsocketWriter{ctx, conn}
-}
-
-func (wsr *WebsocketWriter) Write(data []byte) (n int, err error) {
-	err = wsr.conn.Write(wsr.ctx, websocket.MessageBinary, data)
-	if err == nil {
-		n = len(data)
+func (wsr *Websocket) flush(ctx context.Context) {
+	ticker := time.NewTicker(120 * time.Millisecond)
+	defer ticker.Stop()
+	var err error
+SERVING:
+	for {
+		select {
+		case <-ctx.Done():
+			break SERVING
+		case <-ticker.C:
+			err = wsr.rb.Flush()
+		}
 	}
+	if err != nil {
+		wsr.rw.CloseWithError(err)
+	} else {
+		wsr.rw.Close()
+	}
+	log.Debug("1 stop")
+}
+
+func (wsr *Websocket) read(ctx context.Context, cancel context.CancelFunc) {
+	var err error
+	var data []byte
+	for {
+		if _, data, err = wsr.conn.Read(ctx); err != nil {
+			break
+		}
+		if _, err = wsr.rb.Write(data); err != nil {
+			break
+		}
+	}
+	cancel() // 通知 flush 停止
+	log.Debug("2 stop")
+}
+
+// Read io.Reader
+func (wsr *Websocket) Read(data []byte) (n int, err error) {
+	return wsr.rr.Read(data)
+}
+
+func (wsr *Websocket) Write(data []byte) (n int, err error) {
+	n = len(data)
+	err = wsr.conn.Write(wsr.ctx, websocket.MessageBinary, data)
 	return
 }
 
-func (wsr *WebsocketWriter) Close() error {
+func (wsr *Websocket) CloseWrite() error {
 	return wsr.conn.Close(websocket.StatusNormalClosure, "")
 }

@@ -1,0 +1,39 @@
+package main
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/terrywh/devkit/infra/log"
+	webview "github.com/webview/webview_go"
+)
+
+type ServiceWebview struct {
+	wv webview.WebView
+}
+
+func newServiceWebview() *ServiceWebview {
+	return &ServiceWebview{}
+}
+
+func (sw *ServiceWebview) Serve(ctx context.Context) {
+	log.Trace("webview starting ...")
+	sw.wv = webview.New(true)
+	go func(ctx context.Context) {
+		<-ctx.Done()
+		sw.wv.Terminate()
+	}(ctx)
+	defer sw.wv.Destroy()
+
+	sw.wv.SetTitle("devkit")
+	sw.wv.SetSize(480, 320, webview.HintNone)
+	sw.wv.Navigate(fmt.Sprintf("http://%s/shell.html?address=127.0.0.1:18081", DefaultConfig.Get().Client.Address))
+
+	log.Trace("webview started")
+	sw.wv.Run()
+}
+
+func (sw *ServiceWebview) Close() error {
+	// sw.wv.Terminate()
+	return nil
+}

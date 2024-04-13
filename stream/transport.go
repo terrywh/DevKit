@@ -11,7 +11,7 @@ import (
 
 	quic "github.com/quic-go/quic-go"
 	"github.com/terrywh/devkit/entity"
-	"github.com/terrywh/devkit/infra"
+	"github.com/terrywh/devkit/infra/log"
 )
 
 func DeviceIDFromCert(cert []byte) entity.DeviceID {
@@ -130,7 +130,7 @@ func (tr *Transport) Dial(ctx context.Context, options *DialOptions) (conn quic.
 		if err = ctx.Err(); err != nil {
 			break
 		}
-		infra.Debug("-> ", options.Address, "(", i+1, "/", options.Retry, ")")
+		log.Trace("-> ", options.Address, "(", i+1, "/", options.Retry, ")")
 		if conn, device_id, err = tr.dial(ctx, options); err == nil && conn != nil {
 			break
 		}

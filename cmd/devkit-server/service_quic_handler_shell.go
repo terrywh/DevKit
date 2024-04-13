@@ -9,6 +9,7 @@ import (
 	"github.com/terrywh/devkit/app"
 	"github.com/terrywh/devkit/entity"
 	"github.com/terrywh/devkit/infra"
+	"github.com/terrywh/devkit/infra/log"
 	"github.com/terrywh/devkit/stream"
 )
 
@@ -80,13 +81,13 @@ func (hss *ShellHandler) HandleStart(ctx context.Context, src *stream.SessionStr
 
 	e.cpty, err = infra.StartPty(ctx, e.Rows, e.Cols, e.ShellCmd[0], e.ShellCmd[1:]...)
 	if err != nil {
-		infra.Warn("<devkit-server> failed to start shell (start): ", err)
+		log.Warn("<devkit-server> failed to start shell (start): ", err)
 		hss.Respond(src, err)
 		return
 	}
 	defer e.cpty.Close()
 
-	infra.Debug("<devkit-server> shell started: ", &e.cpty)
+	log.Trace("<devkit-server> shell started: ", &e.cpty)
 	wg := &sync.WaitGroup{}
 	wg.Add(2)
 	go func() {
@@ -107,7 +108,7 @@ func (hss *ShellHandler) HandleStart(ctx context.Context, src *stream.SessionStr
 	wg.Wait()
 
 	hss.del(e)
-	infra.Debug("<devkit-server> shell closed: ", &e.cpty)
+	log.Trace("<devkit-server> shell closed: ", &e.cpty)
 }
 
 func (hss *ShellHandler) HandleResize(ctx context.Context, src *stream.SessionStream) {

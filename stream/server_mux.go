@@ -6,7 +6,7 @@ import (
 
 	"github.com/quic-go/quic-go"
 	"github.com/terrywh/devkit/entity"
-	"github.com/terrywh/devkit/infra"
+	"github.com/terrywh/devkit/infra/log"
 )
 
 type StreamHandlerFunc struct {
@@ -52,7 +52,7 @@ func (mux ServeMux) ServeStream(ctx context.Context, src *SessionStream) {
 	if handler, found := mux.handler[path]; found {
 		handler.ServeStream(ctx, src)
 	} else {
-		infra.Debug("<stream> server handler not found: path =", path)
+		log.Warn("<stream> server handler not found: path =", path)
 		json.NewEncoder(src).Encode(entity.Response{Error: entity.ErrHandlerNotFound})
 		src.s.CancelRead(quic.StreamErrorCode(entity.ErrSessionNotFound.Code))
 	}

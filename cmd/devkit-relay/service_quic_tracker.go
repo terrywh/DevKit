@@ -6,7 +6,7 @@ import (
 	"github.com/quic-go/quic-go"
 	"github.com/terrywh/devkit/app"
 	"github.com/terrywh/devkit/entity"
-	"github.com/terrywh/devkit/infra"
+	"github.com/terrywh/devkit/infra/log"
 )
 
 func newDiscoveryTracker() *ServiceQuicTracker {
@@ -33,7 +33,7 @@ func (dt *ServiceQuicTracker) GetConn(device_id entity.DeviceID) (conn quic.Conn
 }
 
 func (dt *ServiceQuicTracker) Enter(conn_id uint64, device_id entity.DeviceID, conn quic.Connection) {
-	infra.Debug("<devkit-relay> connection enter: device_id = ", device_id)
+	log.Trace("<devkit-relay> connection enter: device_id = ", device_id)
 	dt.mutex.Lock()
 	defer dt.mutex.Unlock()
 
@@ -49,7 +49,7 @@ func (dt *ServiceQuicTracker) Leave(conn_id uint64, device_id entity.DeviceID, c
 	if dc := dt.device[device_id]; dc == conn {
 		delete(dt.device, device_id)
 	}
-	infra.Debug("<devkit-relay> connection leave: device_id = ", device_id)
+	log.Trace("<devkit-relay> connection leave: device_id = ", device_id)
 }
 
 func (dt *ServiceQuicTracker) Close() error {

@@ -15,11 +15,16 @@ type ConfigPayloadServer struct {
 	PrivateKey  string `yaml:"private_key"`
 }
 
+type ConfigPayloadLog struct {
+	Level string `yaml:"level"`
+}
 type ConfigPayload struct {
-	Server ConfigPayloadServer
+	Server ConfigPayloadServer `yaml:"server"`
+	Log    ConfigPayloadLog    `yaml:"log"`
 }
 
 func (cp *ConfigPayload) InitFlag() {
+	flag.StringVar(&cp.Log.Level, "log.level", "warn", "日志级别")
 	flag.StringVar(&cp.Server.Address, "server.address", "0.0.0.0:18080", "注册呼叫服务")
 	flag.StringVar(&cp.Server.Certificate, "server.certificate",
 		filepath.Join(app.GetBaseDir(), "var/cert/server.crt"), "服务证书公钥")

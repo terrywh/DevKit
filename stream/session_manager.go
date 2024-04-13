@@ -6,7 +6,7 @@ import (
 
 	"github.com/quic-go/quic-go"
 	"github.com/terrywh/devkit/entity"
-	"github.com/terrywh/devkit/infra"
+	"github.com/terrywh/devkit/infra/log"
 )
 
 type SessionManager interface {
@@ -87,7 +87,7 @@ func (mgr *DefaultSessionManager) EnsureConn(ctx context.Context, peer *entity.S
 		if err = mgr.resolver.Resolve(ctx, peer); err != nil {
 			return
 		}
-		infra.Debug("<stream> device address resolved: ", peer.Address)
+		log.Debug("<stream> device address resolved: ", peer.Address)
 	}
 	// 建立新会话
 	if conn, err = mgr.provider.Acquire(ctx, peer); err != nil {

@@ -1,10 +1,10 @@
 //go:build windows
 // +build windows
 
-package main
+package infra
 
 import "golang.org/x/sys/windows"
 
-func (handler *DeviceHandler) initDeviceVersion() (major, minor, build uint32) {
+func (system *System) Version() (major, minor, build uint32) {
 	return windows.RtlGetNtVersionNumbers()
 }

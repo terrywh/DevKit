@@ -6,7 +6,7 @@ import (
 	"github.com/quic-go/quic-go"
 	"github.com/terrywh/devkit/app"
 	"github.com/terrywh/devkit/entity"
-	"github.com/terrywh/devkit/infra"
+	"github.com/terrywh/devkit/infra/log"
 	"github.com/terrywh/devkit/stream"
 )
 
@@ -31,7 +31,7 @@ func (handler *ServiceQuicHandler) HandleDial(ctx context.Context, src *stream.S
 		return
 	}
 	client := src.RemotePeer()
-	infra.Debug("<devkit-relay> dail ", client.DeviceID, "(", client.Address, ") => ", server.DeviceID, "(", server.Address, ")")
+	log.Info("<devkit-relay> dail ", client.DeviceID, "(", client.Address, ") => ", server.DeviceID, "(", server.Address, ")")
 
 	// P2P 建连：
 	// 1. 要求 SERVER 向本测 CLIENT (ss.RemoteAddress()) 发送数据包打洞

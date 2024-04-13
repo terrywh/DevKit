@@ -9,6 +9,7 @@ import (
 
 	"github.com/terrywh/devkit/entity"
 	"github.com/terrywh/devkit/infra"
+	"github.com/terrywh/devkit/infra/log"
 )
 
 type StreamFile struct {
@@ -67,12 +68,12 @@ func (s *StreamFile) Do(ctx context.Context, src io.Reader) (err error) {
 		return
 	}
 	if err = os.Chmod(dst.Name(), os.FileMode(s.Desc.Source.Perm)); err != nil {
-		infra.Warn("<app> failed to stream file (perm): ", err)
+		log.Warn("<app> failed to stream file (perm): ", err)
 		err = nil
 	}
 
 	if err = os.Rename(dst.Name(), target); err != nil {
-		err = fmt.Errorf("stream file (rename): %w", err)
+		err = fmt.Errorf("stream file (move): %w", err)
 	}
 	return
 }
