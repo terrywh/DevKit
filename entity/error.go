@@ -2,7 +2,7 @@ package entity
 
 type ErrorCode interface {
 	error
-	ErrCode() int
+	ErrorCode() int
 }
 
 type DefaultErrorCode struct {
@@ -23,11 +23,11 @@ type Response struct {
 	Data  interface{}       `json:"data"`
 }
 
-var ErrSuccess *DefaultErrorCode = &DefaultErrorCode{Code: 0, Info: ""}
-var ErrUnknown *DefaultErrorCode = &DefaultErrorCode{Code: 10000, Info: "unknown error"}
-var ErrInvalidArguments *DefaultErrorCode = &DefaultErrorCode{Code: 10001, Info: "invalid arguments"}
-var ErrSessionNotFound *DefaultErrorCode = &DefaultErrorCode{Code: 10002, Info: "shell not found"}
-var ErrUnauthorized *DefaultErrorCode = &DefaultErrorCode{Code: 10003, Info: "unauthorized"}
-var ErrHandlerNotFound *DefaultErrorCode = &DefaultErrorCode{Code: 10004, Info: "handler not found"}
-var ErrFileCorrupted *DefaultErrorCode = &DefaultErrorCode{Code: 10005, Info: "file corrupted"}
-var ErrFileExisted *DefaultErrorCode = &DefaultErrorCode{Code: 10006, Info: "file existed"}
+var ErrSuccess ErrorCode = &DefaultErrorCode{Code: 0, Info: ""}
+var ErrUnknown ErrorCode = &DefaultErrorCode{Code: 10000, Info: "unknown error"}
+var ErrInvalidArguments ErrorCode = &DefaultErrorCode{Code: 10001, Info: "invalid arguments"}
+var ErrSessionNotFound ErrorCode = &DefaultErrorCode{Code: 10002, Info: "shell not found"}
+var ErrUnauthorized ErrorCode = &DefaultErrorCode{Code: 10003, Info: "unauthorized"}
+var ErrHandlerNotFound ErrorCode = &DefaultErrorCode{Code: 10004, Info: "handler not found"}
+var ErrFileCorrupted ErrorCode = &DefaultErrorCode{Code: 10005, Info: "file corrupted"}
+var ErrFileExisted ErrorCode = &DefaultErrorCode{Code: 10006, Info: "file existed"}

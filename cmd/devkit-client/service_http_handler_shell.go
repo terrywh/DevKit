@@ -91,7 +91,6 @@ func (css *ShellHandler) HandleSocket(rsp http.ResponseWriter, req *http.Request
 		log.Warn("<devkit-client> failed to acquire stream:", err)
 		return
 	}
-	defer dst.CloseRead()
 	defer dst.CloseWrite()
 	// 确认对应前端通道
 	c, err := websocket.Accept(rsp, req, &websocket.AcceptOptions{
@@ -110,16 +109,17 @@ func (css *ShellHandler) HandleSocket(rsp http.ResponseWriter, req *http.Request
 
 func (css *ShellHandler) prepareShell(ctx context.Context, shell *entity.ServerShell) (err error) {
 	// 确保能够联通（内部可能通过 REGISTRY 进行地址查询和反向发包）
-	var ss *stream.SessionStream
-	ss, err = css.mgr.Acquire(ctx, &shell.Server)
+	var dst *stream.SessionStream
+	dst, err = css.mgr.Acquire(ctx, &shell.Server)
 	if err != nil {
 		return
 	}
-	if err = app.Invoke(ctx, ss, "/server/query", &shell.Server, &shell.Server); err != nil {
+	defer dst.CloseWrite()
+	if err = app.Invoke(ctx, dst, "/server/query", &shell.Server, &shell.Server); err != nil {
 		return
 	}
 	shell.ShellId = entity.ShellID(uuid.New().String())
-	shell.Address = ss.Peer.Address
+	shell.Address = dst.Peer.Address
 	css.put(shell)
 	return nil
 
@@ -159,13 +159,14 @@ func (css *ShellHandler) HandleResize(rsp http.ResponseWriter, req *http.Request
 		return
 	}
 	json.NewDecoder(req.Body).Decode(e)
-	ss, err := css.mgr.Acquire(ctx, &e.Server)
+	dst, err := css.mgr.Acquire(ctx, &e.Server)
 	if err != nil {
 		log.Warn("<devkit-client> failed acquire session:", err)
 		css.Respond(rsp, err)
 		return
 	}
-	err = app.Invoke(ctx, ss, "/shell/resize", e, nil)
+	defer dst.CloseWrite()
+	err = app.Invoke(ctx, dst, "/shell/resize", e, nil)
 	css.Respond(rsp, err)
 }
 

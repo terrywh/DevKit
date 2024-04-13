@@ -55,7 +55,7 @@ func (handler *QuicFileHandler) HandlePull(ctx context.Context, src *stream.Sess
 	// 	handler.Respond(src, err)
 	// 	return
 	// }
-	// defer dst.Close()
+	// defer dst.CloseWrite()
 
 	file, err := os.Open(sf.Source.Path)
 	if err != nil {

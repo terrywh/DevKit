@@ -6,7 +6,6 @@ import (
 	"io"
 	"time"
 
-	"github.com/terrywh/devkit/infra/log"
 	"nhooyr.io/websocket"
 )
 
@@ -48,7 +47,6 @@ SERVING:
 	} else {
 		wsr.rw.Close()
 	}
-	log.Debug("1 stop")
 }
 
 func (wsr *Websocket) read(ctx context.Context, cancel context.CancelFunc) {
@@ -63,7 +61,6 @@ func (wsr *Websocket) read(ctx context.Context, cancel context.CancelFunc) {
 		}
 	}
 	cancel() // 通知 flush 停止
-	log.Debug("2 stop")
 }
 
 // Read io.Reader

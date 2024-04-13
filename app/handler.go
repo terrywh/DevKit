@@ -36,7 +36,7 @@ func (StreamHandlerBase) Respond(w io.Writer, data interface{}) (reply error) {
 		if ewc, ok := err.(entity.ErrorCode); ok {
 			reply = json.NewEncoder(w).Encode(entity.Response{
 				Error: &entity.DefaultErrorCode{
-					Code: ewc.ErrCode(), Info: top.Error(),
+					Code: ewc.ErrorCode(), Info: top.Error(),
 				},
 			})
 			return
@@ -46,7 +46,7 @@ func (StreamHandlerBase) Respond(w io.Writer, data interface{}) (reply error) {
 	// 未知的错误类型
 	reply = json.NewEncoder(w).Encode(entity.Response{
 		Error: &entity.DefaultErrorCode{
-			Code: entity.ErrUnknown.Code, Info: top.Error(),
+			Code: entity.ErrUnknown.ErrorCode(), Info: top.Error(),
 		},
 	})
 	return

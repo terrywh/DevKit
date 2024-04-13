@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -27,8 +26,8 @@ func initHttpFileHandler(mux *http.ServeMux) *HttpFileHandler {
 }
 
 func (handler *HttpFileHandler) HandlePull(w http.ResponseWriter, r *http.Request) {
-	bash_id, _ := strconv.ParseUint(r.URL.Query().Get("bash_id"), 10, 32)
-	shell := DefaultShellHandler.find(int(bash_id))
+	bash_pid, _ := strconv.ParseUint(r.URL.Query().Get("bash_pid"), 10, 32)
+	shell := DefaultShellHandler.find(int(bash_pid))
 	if shell == nil {
 		handler.Respond(w, entity.ErrSessionNotFound)
 		return
@@ -38,14 +37,9 @@ func (handler *HttpFileHandler) HandlePull(w http.ResponseWriter, r *http.Reques
 		handler.Respond(w, fmt.Errorf("stream file (conn): %w", err))
 		return
 	}
-	defer src.CloseRead()
 	defer src.CloseWrite()
 
 	sf := entity.StreamFile{}
-	if err = json.NewDecoder(r.Body).Decode(&sf); err != nil {
-		handler.Respond(w, fmt.Errorf("stream file (req): %w", err))
-		return
-	}
 	io.WriteString(src, "/file/pull:")
 	if err = app.SendJSON(src, sf); err != nil {
 		handler.Respond(w, fmt.Errorf("stream file (req): %w", err))
@@ -72,8 +66,8 @@ func (handler *HttpFileHandler) HandlePull(w http.ResponseWriter, r *http.Reques
 }
 
 func (handler *HttpFileHandler) HandlePush(w http.ResponseWriter, r *http.Request) {
-	bash_id, _ := strconv.ParseUint(r.URL.Query().Get("bash_id"), 10, 32)
-	shell := DefaultShellHandler.find(int(bash_id))
+	bash_pid, _ := strconv.ParseUint(r.URL.Query().Get("bash_pid"), 10, 32)
+	shell := DefaultShellHandler.find(int(bash_pid))
 	if shell == nil {
 		handler.Respond(w, entity.ErrSessionNotFound)
 		return
@@ -83,7 +77,6 @@ func (handler *HttpFileHandler) HandlePush(w http.ResponseWriter, r *http.Reques
 		handler.Respond(w, fmt.Errorf("stream file (conn): %w", err))
 		return
 	}
-	defer src.CloseRead()
 	defer src.CloseWrite()
 
 	size, _ := strconv.ParseInt(r.URL.Query().Get("size"), 10, 64)

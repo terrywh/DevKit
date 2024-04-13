@@ -22,9 +22,9 @@ async function build(name, os, arch) {
         });
     });
 }
-// 链接使用 Webview 时最好在对应平台编译
-await build("devkit-client", "darwin")
-await build("devkit-client", "darwin")
+
+await build("devkit-client", "darwin", "arm64")
+await build("devkit-client", "windows", "amd64")
 
 await build("devkit", "windows", "amd64")
 await build("devkit","linux","amd64")

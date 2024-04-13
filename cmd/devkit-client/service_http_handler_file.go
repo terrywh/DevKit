@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"io"
 	"net/http"
@@ -23,14 +24,18 @@ func initHttpFileHandler(mgr stream.SessionManager, mux *http.ServeMux) *HttpFil
 	return handler
 }
 
-func (handler *HttpFileHandler) HandlePush(w http.ResponseWriter, req *http.Request) {
-	query := req.URL.Query()
+func (handler *HttpFileHandler) HandlePush(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
 
 	sf := entity.StreamFile{}
+	sf.Options.Override, _ = strconv.ParseBool(query.Get("override"))
 	sf.Source.Path = query.Get("source")
-	sf.Source.Size = req.ContentLength
+	sf.Source.Size = r.ContentLength
 	perm, _ := strconv.ParseUint(query.Get("perm"), 8, 32)
 	sf.Source.Perm = uint32(perm)
+	if sf.Source.Perm == 0 {
+		sf.Source.Perm = 0o644
+	}
 	sf.Target.Path = query.Get("target")
 	// push.Target.Size = push.Source.Size
 	// push.Target.Perm = push.Source.Perm
@@ -43,12 +48,17 @@ func (handler *HttpFileHandler) HandlePush(w http.ResponseWriter, req *http.Requ
 		handler.Respond(w, entity.ErrInvalidArguments)
 		return
 	}
+
 	dst, err := handler.mgr.Acquire(context.TODO(), &target)
 	if err != nil {
 		handler.Respond(w, err)
 		return
 	}
-	if handler.isLocalFile(&sf.Source) {
+	defer dst.CloseWrite()
+	rbody := bufio.NewReader(r.Body)
+	var fromfile bool
+	if _, err = rbody.Peek(1); err != nil {
+		fromfile = true
 		info, err := os.Stat(sf.Source.Path)
 		if err != nil {
 			handler.Respond(w, err)
@@ -65,25 +75,28 @@ func (handler *HttpFileHandler) HandlePush(w http.ResponseWriter, req *http.Requ
 	}
 	// 传输文件
 	var size int64
-	if handler.isLocalFile(&sf.Source) {
-		file, err := os.Open(sf.Source.Path)
+	if fromfile {
+		var file *os.File
+		file, err = os.Open(sf.Source.Path)
 		if err != nil {
 			handler.Respond(w, err)
 			return
 		}
 		defer file.Close()
 		size, err = io.Copy(dst, file)
-	} else { // 直接将请求内容写入目标文件
-		size, err = io.Copy(dst, req.Body)
+	} else {
+		size, err = io.Copy(dst, rbody) // 尝试直接将请求内容写入目标文件
 	}
+	dst.CloseWrite() // 文件发送完毕
 	// 检查文件
-	if err != nil || size != sf.Source.Size {
+	if err != nil {
+		handler.Respond(w, err)
+		return
+	}
+	if sf.Options.Override && size != sf.Source.Size {
 		handler.Respond(w, entity.ErrFileCorrupted)
 		return
 	}
-	handler.Respond(w, nil)
-}
-
-func (handler *HttpFileHandler) isLocalFile(file *entity.File) bool {
-	return file.Size == 0 // 直接在 REQ 流中传递文件应包含 Content-Length 大小
+	err = app.Read(dst.Reader(), nil)
+	handler.Respond(w, err)
 }

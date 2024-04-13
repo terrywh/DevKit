@@ -38,7 +38,6 @@ func (mux ServeMux) HandleFunc(path string, fn func(ctx context.Context, ss *Ses
 
 func (mux ServeMux) ServeStream(ctx context.Context, src *SessionStream) {
 	defer src.CloseWrite()
-	defer src.CloseRead()
 	if ctx.Err() != nil {
 		return
 	}
@@ -53,7 +52,7 @@ func (mux ServeMux) ServeStream(ctx context.Context, src *SessionStream) {
 		handler.ServeStream(ctx, src)
 	} else {
 		log.Warn("<stream> server handler not found: path =", path)
-		json.NewEncoder(src).Encode(entity.Response{Error: entity.ErrHandlerNotFound})
-		src.s.CancelRead(quic.StreamErrorCode(entity.ErrSessionNotFound.Code))
+		json.NewEncoder(src).Encode(entity.Response{Error: entity.ErrHandlerNotFound.(*entity.DefaultErrorCode)})
+		src.s.CancelRead(quic.StreamErrorCode(entity.ErrSessionNotFound.ErrorCode()))
 	}
 }

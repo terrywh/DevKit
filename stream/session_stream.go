@@ -47,9 +47,9 @@ func (ss *SessionStream) RemotePeer() *entity.Server {
 	return &ss.Peer
 }
 
-func (ss *SessionStream) CloseRead() {
-	ss.s.CancelRead(quic.StreamErrorCode(0))
-}
+// func (ss *SessionStream) CloseRead() {
+// 	ss.s.CancelRead(quic.StreamErrorCode(0))
+// }
 
 func (ss *SessionStream) CloseWrite() error {
 	return ss.s.Close()

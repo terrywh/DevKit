@@ -27,7 +27,7 @@ func (handler *HandlerPull) InitFlag(fs *flag.FlagSet) {
 
 func (handler *HandlerPull) Do(ctx context.Context) (err error) {
 	var rsp *http.Response
-	if rsp, err = handler.Post(fmt.Sprintf("/file/pull?bash_id=%d", os.Getppid()), nil); err != nil {
+	if rsp, err = handler.Post(fmt.Sprintf("/file/pull?bash_pid=%d", os.Getppid()), nil); err != nil {
 		return err
 	}
 	defer rsp.Body.Close()

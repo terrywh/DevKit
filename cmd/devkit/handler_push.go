@@ -58,7 +58,7 @@ func (handler *HandlerPush) Do(ctx context.Context) (err error) {
 	defer prog.Close()
 
 	rbody := io.TeeReader(body, prog)
-	path := fmt.Sprintf("/file/push?bash_id=%d&path=%s&size=%d&perm=%d",
+	path := fmt.Sprintf("/file/push?bash_pid=%d&path=%s&size=%d&perm=%d",
 		bashpid,
 		url.QueryEscape(sf.Source.Path),
 		sf.Source.Size,

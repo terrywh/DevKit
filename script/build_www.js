@@ -47,7 +47,7 @@ async function publish(src, dst) {
 async function build(source, target) {
     
     if (source.endsWith(".svelte") || source.endsWith(".svelte.js")) {
-        console.log("build (svelte):", source, target);
+        console.log("build (compile):", source, target);
         const file = await readFile(source);
         const m = compile(new TextDecoder().decode(file), {
             dev: true,

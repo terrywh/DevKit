@@ -1,4 +1,18 @@
 # devkit
+## devkit-client
+### 本地接口
+* 推送文件：
+``` http
+POST /file/push?address=<target.server-address>&source=<source.file-path>&target=<target.file-path>&override={target.file-override} HTTP/1.1
+
+<optional.source.file-content>
+```
+## devkit-server
+配合 `devkit` 命令可实现：
+* pull - 从 devkit-client 拉取用户选定的文件
+* push - 向 devkit-client 推送指定的文件内容
+
+## devkit-relay
 
 ## dependencies
 ### bun
