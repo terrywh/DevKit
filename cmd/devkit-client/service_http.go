@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/terrywh/devkit/app"
+	"github.com/terrywh/devkit/infra/log"
 	"github.com/terrywh/devkit/stream"
 )
 
@@ -19,8 +20,9 @@ func newServiceHttp(mgr stream.SessionManager) (s *HttpService) {
 	s.svr = http.Server{Addr: DefaultConfig.Get().Client.Address, Handler: s.mux}
 	initHttpShellHandler(mgr, s.mux)
 	initHttpFileHandler(mgr, s.mux)
+	log.Debug("serve static files:", app.GetBaseDir())
 	s.mux.Handle("/node_modules/", http.FileServer(
-		http.Dir(app.GetBaseDir()+".")))
+		http.Dir(app.GetBaseDir())))
 	s.mux.Handle("/", http.FileServer(
 		http.Dir(app.GetBaseDir()+"/public")))
 	return

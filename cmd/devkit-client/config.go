@@ -41,7 +41,7 @@ type ConfigPayload struct {
 func (cp *ConfigPayload) InitFlag() {
 	flag.StringVar(&cp.Log.Level, "log.level", "info", "日志级别: trace / debug / info / warn / error / fatal")
 	flag.StringVar(&cp.Relay.Address, "relay.address", "42.193.117.122:18080", "注册呼叫服务")
-	flag.StringVar(&cp.Client.Address, "client.address", "0.0.0.0:18080", "客户及控制服务")
+	flag.StringVar(&cp.Client.Address, "client.address", "127.0.0.1:18080", "客户及控制服务")
 	flag.StringVar(&cp.Client.Certificate, "client.certificate",
 		filepath.Join(app.GetBaseDir(), "var/cert/client.crt"), "服务证书公钥")
 	flag.StringVar(&cp.Client.PrivateKey, "client.private_key",

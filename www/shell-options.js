@@ -31,7 +31,9 @@ const theme = {
 
 export const defaultOptions = {
     theme: theme,
-    cursorStyle: "bar",
+    cursorBlink: true,
+    cursorStyle: "block",
+    cursorInactiveStyle: "outline",
     fontFamily: "'Intel One Mono', 'Ubuntu Mono', 'Consolas', monaco, monospaced",
     fontSize: 15,
     lineHeight: 1.3,
