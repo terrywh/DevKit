@@ -1,7 +1,6 @@
 import { compile } from "svelte/compiler";
 import { join, extname, dirname } from "node:path";
 import { copyFile, exists, mkdir, open, readFile, readdir, rm, stat, watch, writeFile } from "node:fs/promises";
-import { parseArgs } from "node:util";
 import { sleep } from "bun";
 
 async function createImportmap() {

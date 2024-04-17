@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/terrywh/devkit/app"
 	"github.com/terrywh/devkit/stream"
 )
 
@@ -13,13 +14,15 @@ type HttpService struct {
 	svr http.Server
 }
 
-func newServiceHttp(mgr stream.SessionManager, mux *stream.ServeMux) (s *HttpService) {
+func newServiceHttp(mgr stream.SessionManager) (s *HttpService) {
 	s = &HttpService{mux: http.NewServeMux()}
 	s.svr = http.Server{Addr: DefaultConfig.Get().Client.Address, Handler: s.mux}
 	initHttpShellHandler(mgr, s.mux)
 	initHttpFileHandler(mgr, s.mux)
-	s.mux.Handle("/node_modules/", http.FileServer(http.Dir(".")))
-	s.mux.Handle("/", http.FileServer(http.Dir("public")))
+	s.mux.Handle("/node_modules/", http.FileServer(
+		http.Dir(app.GetBaseDir()+".")))
+	s.mux.Handle("/", http.FileServer(
+		http.Dir(app.GetBaseDir()+"/public")))
 	return
 }
 

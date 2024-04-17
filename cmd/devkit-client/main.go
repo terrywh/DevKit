@@ -46,7 +46,7 @@ func main() {
 	})
 	initFileHandler(mgr, mux)
 	sc.Start(mgr)
-	sc.Start(newServiceHttp(mgr, mux))
+	sc.Start(newServiceHttp(mgr))
 	sc.WaitForSignal()
 	// }()
 	// 必须在主线程运行
