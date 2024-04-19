@@ -2,6 +2,8 @@ package main
 
 import (
 	"flag"
+	"fmt"
+	"net"
 	"path/filepath"
 
 	"github.com/terrywh/devkit/app"
@@ -21,8 +23,9 @@ func main() {
 	log.DefaultLogger.SetLevel(log.LevelFromString(DefaultConfig.Get().Log.Level))
 	color.Info("DeviceID: ", DefaultConfig.Get().DeviceID(), "\n")
 
+	_, port, _ := net.SplitHostPort(DefaultConfig.Get().Client.Address)
 	stream.InitTransport(stream.TransportOptions{
-		LocalAddress: DefaultConfig.Get().Client.Address,
+		LocalAddress: fmt.Sprintf("0.0.0.0:%s", port),
 	})
 	defer stream.DefaultTransport.Close()
 

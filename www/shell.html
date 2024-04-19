@@ -107,9 +107,9 @@
                     term.fit();
                 }, 240);
             });
-            sock.addEventListener("close", () => {
+            sock.addEventListener("close", (e) => {
                 term.write(`\r\n\x1b[38;5;214mConnection closed, closing windows in 5s ...\x1b[0m\r\n`);
-                if (e.reason.length > 0) {
+                if (e.reason && e.reason.length > 0) {
                     term.write(`\x1b[38;5:202mReason: ${e.reason}\x1b[0m\r\n`);
                 }
                 setTimeout(() => window.close(), 4500);
