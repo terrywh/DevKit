@@ -18,7 +18,7 @@ import (
 )
 
 type Handler interface {
-	InitFlag(fs *flag.FlagSet)
+	InitFlag(flagCommand, flagGlobal *flag.FlagSet)
 	Do(ctx context.Context) error
 	Close() error
 }

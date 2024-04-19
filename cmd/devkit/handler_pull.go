@@ -20,9 +20,9 @@ type HandlerPull struct {
 	override bool
 }
 
-func (handler *HandlerPull) InitFlag(fs *flag.FlagSet) {
-	fs.BoolVar(&handler.override, "o", false, "")
-	fs.BoolVar(&handler.override, "override", false, "覆盖本地已存在的文件")
+func (handler *HandlerPull) InitFlag(flagCommand, flagGlobal *flag.FlagSet) {
+	flagCommand.BoolVar(&handler.override, "o", false, "")
+	flagCommand.BoolVar(&handler.override, "override", false, "覆盖本地已存在的文件")
 }
 
 func (handler *HandlerPull) Do(ctx context.Context) (err error) {
@@ -44,9 +44,9 @@ func (handler *HandlerPull) Do(ctx context.Context) (err error) {
 	if err = app.Read(r, &sf); err != nil {
 		return err
 	}
-	log.InfoContext(ctx, "<devkit> stream file:", sf.Source.Path)
+	log.DebugContext(ctx, "<devkit> stream file:", sf.Source.Path)
 
-	prog := progressbar.DefaultBytes(sf.Source.Size)
+	prog := progressbar.DefaultBytes(sf.Source.Size, filepath.Base(sf.Source.Path))
 	defer prog.Close()
 	// 填写目标文件，从流接收写入
 	sf.Target.Path = filepath.Join(wd, filepath.Base(sf.Source.Path))

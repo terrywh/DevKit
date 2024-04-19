@@ -46,10 +46,10 @@ func main() {
 	switch scmd {
 	case "pull":
 		handler = &HandlerPull{}
-		handler.InitFlag(flagCommand)
+		handler.InitFlag(flagCommand, flagGlobal)
 	case "push":
 		handler = &HandlerPush{}
-		handler.InitFlag(flagCommand)
+		handler.InitFlag(flagCommand, flagGlobal)
 	default:
 		fmt.Println("错误: 未知命令")
 		flagGlobal.Usage()

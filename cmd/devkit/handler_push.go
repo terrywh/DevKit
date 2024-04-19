@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 
 	"github.com/schollz/progressbar/v3"
 	"github.com/terrywh/devkit/app"
@@ -18,16 +19,30 @@ import (
 
 type HandlerPush struct {
 	HandlerBase
-	file     string
-	override bool
+	flagCommand *flag.FlagSet
+	file        string
+	override    bool
 }
 
-func (handler *HandlerPush) InitFlag(fs *flag.FlagSet) {
-	fs.StringVar(&handler.file, "f", "", "")
-	fs.StringVar(&handler.file, "file", "", "待下载推送的文件")
+func (handler *HandlerPush) InitFlag(flagCommand, flagGlobal *flag.FlagSet) {
+	// flagCommand.StringVar(&handler.file, "f", "", "")
+	// flagCommand.StringVar(&handler.file, "file", "", "待下载推送的文件")
+	handler.flagCommand = flagCommand
+	flagCommand.Usage = func() {
+		fmt.Println(os.Args[0], "<全局选项>", flagCommand.Name(), "<命令选项> <目标文件>")
+		fmt.Println("全局选项:")
+		flagGlobal.PrintDefaults()
+		fmt.Println("命令选项:")
+		flagCommand.PrintDefaults()
+	}
 }
 
 func (handler *HandlerPush) Do(ctx context.Context) (err error) {
+	if handler.flagCommand.NArg() < 1 {
+		err = entity.ErrInvalidArguments
+		return
+	}
+
 	bashpid, err := GetBashPid()
 	if err != nil {
 		return err
@@ -35,7 +50,7 @@ func (handler *HandlerPush) Do(ctx context.Context) (err error) {
 
 	sf := entity.StreamFile{
 		Source: entity.File{
-			Path: handler.file,
+			Path: handler.flagCommand.Arg(0),
 		},
 	}
 	info, err := os.Stat(sf.Source.Path)
@@ -52,9 +67,9 @@ func (handler *HandlerPush) Do(ctx context.Context) (err error) {
 	// HTTP POST 会自行关闭 Body 但未能将 file 作为 io.Closer 传递
 	defer body.Close()
 
-	log.InfoContext(ctx, "<devkit> stream file:", sf.Source.Path)
+	log.DebugContext(ctx, "<devkit> stream file:", sf.Source.Path)
 
-	prog := progressbar.DefaultBytes(sf.Source.Size)
+	prog := progressbar.DefaultBytes(sf.Source.Size, filepath.Base(sf.Source.Path))
 	defer prog.Close()
 
 	rbody := io.TeeReader(body, prog)
