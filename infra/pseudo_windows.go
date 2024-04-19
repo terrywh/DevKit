@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/UserExistsError/conpty"
+	"github.com/terrywh/conpty"
 )
 
 type WindowsPseudo struct {
@@ -46,7 +46,7 @@ func (wp *WindowsPseudo) Resize(cols, rows int) error {
 }
 
 func (wp *WindowsPseudo) Pid() int {
-	return 0
+	return int(wp.cpty.Pid())
 }
 
 func StartPty(ctx context.Context, rows, cols int, cmd string, args ...string) (pty Pseudo, err error) {

@@ -74,7 +74,6 @@ func (handler *HandlerPush) Do(ctx context.Context) (err error) {
 	// defer file.Close()
 	// app.Debug(io.Copy(file, rsp.Body))
 	// return
-	log.Trace("before response")
 	r := bufio.NewReader(rsp.Body)
 	err = app.Read(r, &sf)
 	return

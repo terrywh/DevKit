@@ -5,7 +5,6 @@ go 1.22
 toolchain go1.22.1
 
 require (
-	github.com/UserExistsError/conpty v0.1.2
 	github.com/creack/pty v1.1.21
 	github.com/fatih/color v1.16.0
 	github.com/fsnotify/fsnotify v1.7.0
@@ -14,6 +13,7 @@ require (
 	github.com/ncruces/zenity v0.10.12
 	github.com/quic-go/quic-go v0.42.0
 	github.com/schollz/progressbar/v3 v3.14.2
+	github.com/terrywh/conpty v0.1.4
 	golang.org/x/crypto v0.17.0
 	golang.org/x/sys v0.17.0
 	golang.org/x/term v0.17.0

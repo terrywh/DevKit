@@ -14,6 +14,7 @@ import (
 	ps "github.com/mitchellh/go-ps"
 	"github.com/terrywh/devkit/app"
 	"github.com/terrywh/devkit/entity"
+	"github.com/terrywh/devkit/infra/log"
 )
 
 type Handler interface {
@@ -54,6 +55,7 @@ func GetBashPid() (pid int, err error) {
 	if err = app.Read(bufio.NewReader(rsp.Body), &server); err != nil {
 		return
 	}
+	log.Trace("<devkit> GetBashPid() devkit-server:", server)
 	// 2. 找到 SERVER 的子、调用方的父进程
 	var proc ps.Process
 	ppid := os.Getppid()
@@ -63,6 +65,7 @@ func GetBashPid() (pid int, err error) {
 			pid = 0
 			return
 		}
+		log.Trace("<devkit> GetBashPid() find:", proc.Executable(), proc.Pid(), proc.PPid())
 		if proc.PPid() < 10 {
 			break
 		}
