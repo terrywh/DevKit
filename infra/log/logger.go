@@ -32,16 +32,6 @@ func New(w io.Writer, level int) *Logger {
 	}
 }
 
-func (l *Logger) WithContextFields(ctx context.Context, v ...any) context.Context {
-	fields, ok := ctx.Value(defaultLoggerKey).(*LoggerFields)
-	if !ok {
-		fields = &LoggerFields{}
-		ctx = context.WithValue(ctx, defaultLoggerKey, fields)
-	}
-	fields.payload = append(fields.payload, v...)
-	return ctx
-}
-
 func (l *Logger) timestamp() string {
 	return time.Now().Format(time.DateTime)
 }

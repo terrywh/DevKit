@@ -7,6 +7,16 @@ import (
 
 var DefaultLogger *Logger = New(os.Stderr, WARN)
 
+func WithContextFields(ctx context.Context, v ...any) context.Context {
+	fields, ok := ctx.Value(defaultLoggerKey).(*LoggerFields)
+	if !ok {
+		fields = &LoggerFields{}
+		ctx = context.WithValue(ctx, defaultLoggerKey, fields)
+	}
+	fields.payload = append(fields.payload, v...)
+	return ctx
+}
+
 func Trace(args ...any) {
 	DefaultLogger.output(DefaultLogger.c, TRACE, args...)
 }

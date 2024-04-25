@@ -32,6 +32,9 @@ func (cli *Client) Serve(ctx context.Context) {
 	var err error
 SERVING:
 	for {
+		if ctx.Err() != nil {
+			break SERVING
+		}
 		conn /* device_id */, _, err = DefaultTransport.Dial(ctx, &DialOptions{
 			Address:     cli.options.Address, // TODO 公共 REGISTRY 服务
 			Certificate: cli.options.Certificate,
@@ -39,15 +42,14 @@ SERVING:
 			Retry:       3,
 			Backoff:     1200 * time.Millisecond,
 		})
-		if ctx.Err() != nil {
-			break SERVING
-		}
 		if err != nil {
 			log.Warn("<stream> failed to dial relay: ", err)
 			continue
 		}
 		cli.handler.ServeConn(ctx, conn)
+		conn.CloseWithError(quic.ApplicationErrorCode(0), "")
 	}
+
 }
 
 func (cli *Client) Close() error {

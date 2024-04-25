@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"os/signal"
+	"reflect"
 	"sync"
 	"syscall"
 	"time"
@@ -39,12 +40,15 @@ func (sc *ServiceController) Start(svc Service) {
 		svc: svc,
 	}
 	sr.ctx, sr.cancel = context.WithCancelCause(context.Background())
+	sr.ctx = log.WithContextFields(sr.ctx, "service", reflect.TypeOf(svc).Name())
 	sc.running = append(sc.running, sr)
 
 	go func(sr *ServiceRunning) {
 		defer sc.wg.Done()
 		defer sr.cancel(nil)
+		log.DebugContext(sr.ctx, "service started ...")
 		svc.Serve(sr.ctx)
+		log.DebugContext(sr.ctx, "service closed.")
 	}(sr)
 }
 
