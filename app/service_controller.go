@@ -3,9 +3,9 @@ package app
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"os/signal"
-	"reflect"
 	"sync"
 	"syscall"
 	"time"
@@ -16,6 +16,10 @@ import (
 type Service interface {
 	Serve(ctx context.Context)
 	Close() error
+}
+type ServiceWithName interface {
+	Service
+	Name() string
 }
 
 type ServiceRunning struct {
@@ -40,7 +44,9 @@ func (sc *ServiceController) Start(svc Service) {
 		svc: svc,
 	}
 	sr.ctx, sr.cancel = context.WithCancelCause(context.Background())
-	sr.ctx = log.WithContextFields(sr.ctx, "service", reflect.TypeOf(svc).Name())
+	if sn, ok := svc.(ServiceWithName); ok {
+		sr.ctx = log.WithContextFields(sr.ctx, fmt.Sprintf("name=%s", sn.Name()))
+	}
 	sc.running = append(sc.running, sr)
 
 	go func(sr *ServiceRunning) {

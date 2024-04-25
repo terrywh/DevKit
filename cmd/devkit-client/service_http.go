@@ -28,6 +28,10 @@ func newServiceHttp(mgr stream.SessionManager) (s *HttpService) {
 	return
 }
 
+func (svc *HttpService) Name() string {
+	return "http"
+}
+
 func (s *HttpService) Serve(ctx context.Context) {
 	go s.svr.ListenAndServe()
 

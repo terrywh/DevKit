@@ -19,6 +19,10 @@ func newHttpService() (s *HttpService) {
 	return s
 }
 
+func (svc *HttpService) Name() string {
+	return "http"
+}
+
 func (svc *HttpService) Serve(ctx context.Context) {
 	go svc.svr.ListenAndServe()
 
