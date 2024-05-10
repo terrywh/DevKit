@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/schollz/progressbar/v3"
 	"github.com/terrywh/devkit/app"
 	"github.com/terrywh/devkit/entity"
 	"github.com/terrywh/devkit/infra/log"
@@ -36,23 +35,18 @@ func (handler *HandlerPull) Do(ctx context.Context) (err error) {
 	sf := entity.StreamFile{
 		// Target: entity.File{} // 获取到文件流，不指定目标
 	}
-	// file, _ := os.Create("./pull.rst")
-	// defer file.Close()
-	// app.Debug(io.Copy(file, rsp.Body))
-	// return
+
 	r := bufio.NewReader(rsp.Body)
 	if err = app.Read(r, &sf); err != nil {
 		return err
 	}
 	log.DebugContext(ctx, "<devkit> stream file:", sf.Source.Path)
 
-	prog := progressbar.DefaultBytes(sf.Source.Size, filepath.Base(sf.Source.Path))
-	defer prog.Close()
 	// 填写目标文件，从流接收写入
 	sf.Target.Path = filepath.Join(wd, filepath.Base(sf.Source.Path))
 	sf.Options.Override = handler.override
 
-	proc := &app.StreamFile{Desc: &sf, Prog: prog}
+	proc := app.NewStreamFile(&sf, true)
 	err = proc.Do(ctx, r)
 	return
 }

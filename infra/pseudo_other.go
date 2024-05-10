@@ -7,6 +7,7 @@ import (
 	"context"
 	"os"
 	"os/exec"
+	"syscall"
 	"time"
 
 	"github.com/creack/pty"
@@ -28,6 +29,7 @@ func (up UnixPseudo) Write(data []byte) (int, error) {
 func (up UnixPseudo) Close() (err error) {
 	err = up.file.Close()
 	up.proc.WaitDelay = 3 * time.Second
+	up.proc.Process.Signal(syscall.SIGTERM)
 	up.proc.Wait()
 	return
 }

@@ -131,19 +131,18 @@ func (css *ShellHandler) serveShell(ctx context.Context, e *entity.ServerShell, 
 	// 	e.Cols, e.Rows, _ = term.GetSize(int(os.Stdin.Fd()))
 	// 	defer term.Restore(int(os.Stdin.Fd()), state)
 	// }
-
+	log.DebugContext(ctx, "<devkit-client> shell started: ", &dst)
 	io.WriteString(dst, "/shell/start:")
 	json.NewEncoder(dst).Encode(e)
 
 	go func(ctx context.Context) {
 		_, err = io.Copy(dst, src)
 		dst.CloseWrite()
+		// dst.CloseRead()
 	}(ctx)
 	_, err = io.Copy(src, dst)
 	src.CloseWrite()
-	if err != nil {
-		log.WarnContext(ctx, "<devkit-client> failed serve shell: ", err)
-	}
+	log.DebugContext(ctx, "<devkit-client> shell closed.")
 	return
 }
 

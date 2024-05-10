@@ -20,13 +20,9 @@ import (
 type HandlerPush struct {
 	HandlerBase
 	flagCommand *flag.FlagSet
-	file        string
-	override    bool
 }
 
 func (handler *HandlerPush) InitFlag(flagCommand, flagGlobal *flag.FlagSet) {
-	// flagCommand.StringVar(&handler.file, "f", "", "")
-	// flagCommand.StringVar(&handler.file, "file", "", "待下载推送的文件")
 	handler.flagCommand = flagCommand
 	flagCommand.Usage = func() {
 		fmt.Println(os.Args[0], "<全局选项>", flagCommand.Name(), "<命令选项> <目标文件>")

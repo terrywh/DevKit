@@ -32,6 +32,7 @@ func (handler *QuicFileHandler) HandlePull(ctx context.Context, src *stream.Sess
 		handler.Respond(src, err)
 		return
 	}
+
 	if sf.Source.Path, err = zenity.SelectFile(); err != nil {
 		handler.Respond(src, err)
 		return
@@ -49,13 +50,6 @@ func (handler *QuicFileHandler) HandlePull(ctx context.Context, src *stream.Sess
 	if err = handler.Respond(src, sf); err != nil {
 		return
 	}
-
-	// dst, err := handler.mgr.Acquire(ctx, &src.Peer)
-	// if err != nil {
-	// 	handler.Respond(src, err)
-	// 	return
-	// }
-	// defer dst.CloseWrite()
 
 	file, err := os.Open(sf.Source.Path)
 	if err != nil {
@@ -89,7 +83,7 @@ func (handler *QuicFileHandler) HandlePush(ctx context.Context, src *stream.Sess
 
 	log.InfoContext(ctx, "<devkit-client> stream file: ", sf.Target.Path)
 	sf.Options.Override = true
-	proc := app.StreamFile{Desc: &sf, Prog: nil}
+	proc := app.NewStreamFile(&sf, false)
 	if err = proc.Do(ctx, src); err != nil {
 		handler.Respond(src, err)
 		return

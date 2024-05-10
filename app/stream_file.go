@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/schollz/progressbar/v3"
 	"github.com/terrywh/devkit/entity"
 	"github.com/terrywh/devkit/infra"
 	"github.com/terrywh/devkit/infra/log"
@@ -15,7 +16,19 @@ import (
 type StreamFile struct {
 	Desc *entity.StreamFile
 
-	Prog io.Writer
+	prog io.Writer
+}
+
+func NewStreamFile(desc *entity.StreamFile, prog bool) *StreamFile {
+	sf := &StreamFile{
+		Desc: desc,
+	}
+	if prog {
+		sf.prog = progressbar.DefaultBytes(desc.Source.Size, filepath.Base(desc.Source.Path))
+	} else {
+		sf.prog = &dummyWriter{}
+	}
+	return sf
 }
 
 type cancelableWriter struct {
@@ -28,9 +41,9 @@ func (w cancelableWriter) Write(payload []byte) (size int, err error) {
 	return
 }
 
-type progressWriter struct{}
+type dummyWriter struct{}
 
-func (w progressWriter) Write(payload []byte) (size int, err error) {
+func (w dummyWriter) Write(payload []byte) (size int, err error) {
 	size = len(payload)
 	return
 }
@@ -54,11 +67,7 @@ func (s *StreamFile) Do(ctx context.Context, src io.Reader) (err error) {
 	}
 	defer dst.Close()
 
-	if s.Prog == nil {
-		s.Prog = progressWriter{}
-	}
-
-	size, err := io.Copy(io.MultiWriter(dst, s.Prog, &cancelableWriter{ctx}), src)
+	size, err := io.Copy(io.MultiWriter(dst, s.prog, &cancelableWriter{ctx}), src)
 	if err != nil {
 		err = fmt.Errorf("stream file (copy): %w", err)
 		return
