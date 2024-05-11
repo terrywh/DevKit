@@ -46,7 +46,7 @@ async function publish(src, dst) {
 async function build(source, target) {
     
     if (source.endsWith(".svelte") || source.endsWith(".svelte.js")) {
-        console.log("build (compile):", source, target);
+        // console.log("build (compile):", source, target);
         const file = await readFile(source);
         const m = compile(new TextDecoder().decode(file), {
             dev: true,
@@ -55,7 +55,7 @@ async function build(source, target) {
         
         await writeFile(target, m.js.code);
     } else if (extname(source) == ".html") {
-        console.log("build (html):", source, target);
+        // console.log("build (html):", source, target);
         const file = await readFile(source);
         const x = file.indexOf("<head>");
         const dst = await open(target, "w");
@@ -64,14 +64,14 @@ async function build(source, target) {
         await dst.write(file.subarray(x + 6));
         await dst.close();
     } else {
-        console.log("build (copy):", source, target);
+        // console.log("build (copy):", source, target);
         await copyFile(source, target);
     }
 }
 
-console.time("published");
+console.time("build static assets");
 await publish("./www", "./public");
-console.timeEnd("published");
+console.timeEnd("build static assets");
 
 if (process.argv.indexOf("--watch") > 0 || process.argv.indexOf("-w") > 0) {
     console.log("watching ...")

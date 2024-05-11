@@ -21,8 +21,8 @@
             function createTerminal(shell) {
                 const options = defaultOptions;
                 
-                if (shell.system == "windows") {
-                    const build = parseInt(shell.version.split(".").pop());
+                if (shell.server.system == "windows") {
+                    const build = parseInt(shell.server.version.split(".").pop());
                     options.windowsPty = { // 实际的 devkit-server 实现目前仅支持 conpty 形态
                         backend: build > 18309 ? "conpty" : "winpty",
                         buildNumber: build,
@@ -43,22 +43,20 @@
             }
 
             async function prepareShell(query) {
-                const shell_cmd = query.get("shell_cmd")
-                const shell = {
-                    device_id: query.get("device_id") || null,
-                    address: query.get("address") || null,
-                    shell_cmd: shell_cmd ? shell_cmd.split(" ") : null,
-                }
-                
-                const rsp = await fetch("/shell/prepare", {
+                const shell_cmd = query.get("shell.cmd");
+                const rsp = await fetch("/server/shell/prepare", {
                     headers: {
                         "Content-Type": "application/json",
                     },
                     method: "POST",
                     body: JSON.stringify({
-                        "device_id": shell.device_id,
-                        "address": shell.address,
-                        "shell_cmd": shell.shell_cmd,
+                        "server": {
+                            "device_id": query.get("server.device_id") || null,
+                            "address": query.get("server.address") || null,
+                        },
+                        "shell": {
+                            "cmd": shell_cmd ? shell_cmd.split(" ") : null,
+                        }
                     }),
                 });
                 const payload = await rsp.json();
@@ -67,7 +65,7 @@
             }
             
             function createSocket(shell, term) {
-                const sock = new WebSocket(`ws://${location.host}/shell/${shell.shell_id}/socket`, "shell");
+                const sock = new WebSocket(`ws://${location.host}/server/shell/${shell.shell.id}/socket`, "shell");
                 sock.binaryType = "arraybuffer";
                 // 由 TrzszAddon 接管 stream 与 Terminal 间数据交换
                 const promise = new Promise((resolve) => {
@@ -77,27 +75,29 @@
                 });
                 return promise;
             }
-            async function resize(shell_id, e) {
-                const rsp = await fetch(`/shell/${shell_id}/resize`, {
+            async function resize(shell, e) {
+                const rsp = await fetch(`/server/shell/${shell.shell.id}/resize`, {
                     method: "POST",
                     headers: {
                         "content-type": "application/json",
                     },
                     body: JSON.stringify({
-                        rows: e.rows,
-                        cols: e.cols,
+                        shell: {
+                            row: e.rows,
+                            col: e.cols,
+                        },
                     }),
                 });
             }
             
             const query = new URLSearchParams(location.search);
             const shell = await prepareShell(query);
-            window.document.title = `${shell.address} - devkit`;
+            window.document.title = `${shell.server.address} - devkit`;
             const term = await createTerminal(shell);
             const sock = await createSocket(shell, term);
             
             term.onResize(function(e) {
-                resize(shell.shell_id, e)
+                resize(shell, e)
             });
             term.fit();
             let resizeTimeout;

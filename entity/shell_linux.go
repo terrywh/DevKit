@@ -1,11 +1,11 @@
-//go:build windows
-// +build windows
+//go:build linux
+// +build linux
 
 package entity
 
 func (o *Shell) ApplyDefaults() {
 	if len(o.Cmd) < 1 {
-		o.Cmd = []string{"C:\\Windows\\System32\\cmd.exe"}
+		o.Cmd = []string{"bash"}
 	}
 	if o.Row < 16 {
 		o.Row = 16

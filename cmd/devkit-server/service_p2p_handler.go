@@ -26,7 +26,7 @@ func (handler *ServiceP2PHandler) HandleDial(ctx context.Context, src *stream.Se
 		handler.Respond(src, err)
 		return
 	}
-	log.Info("<devkit-server> dial: ", peer.DeviceID, "(", peer.Address, ")")
+	log.Info("<devkit-server> reverse dial: ", peer.DeviceID, "(", peer.Address, ")")
 	if !onAuthorize(peer.DeviceID) {
 		handler.Respond(src, entity.ErrUnauthorized)
 		return
@@ -41,9 +41,9 @@ func (handler *ServiceP2PHandler) HandleDial(ctx context.Context, src *stream.Se
 			if ctx.Err() != nil {
 				break
 			}
+			time.Sleep(5 * time.Second)
 			log.Trace(">> ", peer.Address, " (", i+1, "/", count, ")")
 			stream.DefaultTransport.WriteTo(data, addr)
-			time.Sleep(5 * time.Second)
 		}
 	}(ctx)
 }

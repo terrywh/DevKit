@@ -34,7 +34,7 @@ export const defaultOptions = {
     cursorBlink: true,
     cursorStyle: "block",
     cursorInactiveStyle: "outline",
-    fontFamily: "'Intel One Mono', 'Ubuntu Mono', 'Consolas', monaco, monospaced",
-    fontSize: 15,
-    lineHeight: 1.3,
+    fontFamily: "'Noto Sans Mono CJK SC', monospace, monospace",
+    fontSize: 16,
+    lineHeight: 1.2,
 };

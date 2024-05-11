@@ -43,13 +43,13 @@ func initShellHandler(mux *stream.ServeMux) *ShellHandler {
 func (h *ShellHandler) put(e *ServerShell) {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
-	h.start[e.ShellId] = e
+	h.start[e.Shell.ID] = e
 }
 
 func (h *ShellHandler) del(e *ServerShell) {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
-	delete(h.start, e.ShellId)
+	delete(h.start, e.Shell.ID)
 }
 
 func (h *ShellHandler) get(id entity.ShellID) *ServerShell {
@@ -77,9 +77,9 @@ func (hss *ShellHandler) HandleStart(ctx context.Context, src *stream.SessionStr
 		hss.Respond(src, err)
 		return
 	}
-	e.ApplyDefaults()
+	e.Shell.ApplyDefaults()
 
-	e.cpty, err = infra.StartPty(ctx, e.Rows, e.Cols, e.ShellCmd[0], e.ShellCmd[1:]...)
+	e.cpty, err = infra.StartPty(ctx, e.Shell.Row, e.Shell.Col, e.Shell.Cmd[0], e.Shell.Cmd[1:]...)
 	if err != nil {
 		log.Warn("<devkit-server> failed to start shell (start): ", err)
 		hss.Respond(src, err)
@@ -118,14 +118,14 @@ func (hss *ShellHandler) HandleResize(ctx context.Context, src *stream.SessionSt
 		return
 	}
 
-	e2 := hss.get(e1.ShellId)
+	e2 := hss.get(e1.Shell.ID)
 	if e2 == nil {
 		hss.Respond(src, entity.ErrSessionNotFound)
 		return
 	}
-	e2.Cols = e1.Cols
-	e2.Rows = e1.Rows
-	if err := e2.cpty.Resize(e2.Cols, e2.Rows); err != nil {
+	e2.Shell.Col = e1.Shell.Col
+	e2.Shell.Row = e1.Shell.Row
+	if err := e2.cpty.Resize(e2.Shell.Col, e2.Shell.Row); err != nil {
 		hss.Respond(src, err)
 		return
 	}

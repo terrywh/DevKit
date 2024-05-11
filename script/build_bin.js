@@ -1,17 +1,19 @@
 
 import { spawn } from "node:child_process"
-import { ext } from "./core";
 
 async function build(name, os, arch, ext) {
     // console.log(`\x1b[38;5;214m${name}\x1b[0m_\x1b[38;5;204m${os}\x1b[0m_\x1b[38;5;194m${arch}\x1b[0m`)
     if (os == "windows") {
         ext = ".exe"
+    } else {
+        ext = ""
     }
-    console.time(`${name}_${os}_${arch}${ext}`)
+    const label = `build ${name}_${os}_${arch}${ext}`;
+    console.time(label);
     return new Promise((resolve, reject) => {
         const cp = spawn("go", [
             "build",
-            "-o", `./bin/${name}_${os}_${arch}`,
+            "-o", `./bin/${name}_${os}_${arch}${ext}`,
             `./cmd/${name}`,
         ],{
             stdio: "inherit",
@@ -21,7 +23,7 @@ async function build(name, os, arch, ext) {
             }),
         });
         cp.on("close", (code) => {
-            console.timeEnd(`${name}_${os}_${arch}`)
+            console.timeEnd(label);
             code == 0 ? resolve() : reject(code);
         });
     });
