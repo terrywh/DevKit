@@ -43,10 +43,14 @@ func (handler *HandlerPush) Do(ctx context.Context) (err error) {
 	if err != nil {
 		return err
 	}
+	err = handler.doFile(ctx, bashpid, handler.flagCommand.Arg(0))
+	return
+}
 
+func (handler *HandlerPush) doFile(ctx context.Context, bashpid int, file string) (err error) {
 	sf := entity.StreamFile{
 		Source: entity.File{
-			Path: handler.flagCommand.Arg(0),
+			Path: file,
 		},
 	}
 	info, err := os.Stat(sf.Source.Path)
@@ -81,10 +85,6 @@ func (handler *HandlerPush) Do(ctx context.Context) (err error) {
 	}
 	defer rsp.Body.Close()
 
-	// file, _ := os.Create("./pull.rst")
-	// defer file.Close()
-	// app.Debug(io.Copy(file, rsp.Body))
-	// return
 	r := bufio.NewReader(rsp.Body)
 	err = app.Read(r, &sf)
 	return

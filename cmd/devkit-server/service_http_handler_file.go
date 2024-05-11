@@ -1,7 +1,7 @@
 package main
 
 import (
-	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -20,45 +20,71 @@ type HttpFileHandler struct {
 
 func initHttpFileHandler(mux *http.ServeMux) *HttpFileHandler {
 	handler := &HttpFileHandler{}
+	mux.HandleFunc("/file/list", handler.HandleList)
 	mux.HandleFunc("/file/pull", handler.HandlePull)
 	mux.HandleFunc("/file/push", handler.HandlePush)
 	return handler
 }
 
-func (handler *HttpFileHandler) HandlePull(w http.ResponseWriter, r *http.Request) {
+func (handler *HttpFileHandler) get(r *http.Request) (src *stream.SessionStream, err error) {
 	bash_pid, _ := strconv.ParseUint(r.URL.Query().Get("bash_pid"), 10, 32)
 	shell := DefaultShellHandler.find(int(bash_pid))
 	if shell == nil {
-		handler.Respond(w, entity.ErrSessionNotFound)
+		return nil, entity.ErrSessionNotFound
+	}
+	return stream.NewSessionStream(&shell.Server, shell.conn)
+}
+
+func (handler *HttpFileHandler) HandleList(w http.ResponseWriter, r *http.Request) {
+	src, err := handler.get(r)
+	if err != nil {
+		handler.Respond(w, fmt.Errorf("list file (conn): %w", err))
 		return
 	}
-	src, err := stream.NewSessionStream(&shell.Server, shell.conn)
+	defer src.CloseWrite()
+	io.WriteString(src, "/file/list:")
+
+	sf := []entity.SelectFile{}
+	rsp := entity.Response{Error: &entity.DefaultErrorCode{}, Data: &sf}
+	if err = app.ReadJSON(src.Reader(), &rsp); err != nil {
+		handler.Respond(w, fmt.Errorf("list file (rsp): %w", err))
+		return
+	}
+	handler.Respond(w, sf)
+}
+
+// 2. 依次拉取文件（避免拉取文件列表范围外的文件）
+func (handler *HttpFileHandler) HandlePull(w http.ResponseWriter, r *http.Request) {
+	src, err := handler.get(r)
 	if err != nil {
 		handler.Respond(w, fmt.Errorf("stream file (conn): %w", err))
 		return
 	}
 	defer src.CloseWrite()
+	d := json.NewDecoder(r.Body)
+	rf := entity.SelectFile{}
+	d.Decode(&rf)
+	if rf.Auth == "" || rf.Path == "" {
+		handler.Respond(w, fmt.Errorf("stream file (req): %w", entity.ErrInvalidArguments))
+		return
+	}
 
-	sf := entity.StreamFile{}
 	io.WriteString(src, "/file/pull:")
-	if err = app.SendJSON(src, sf); err != nil {
+	if err = app.SendJSON(src, rf); err != nil {
 		handler.Respond(w, fmt.Errorf("stream file (req): %w", err))
 		return
 	}
+	sf := entity.StreamFile{}
 	rsp := entity.Response{Error: &entity.DefaultErrorCode{}, Data: &sf}
 	if err = app.ReadJSON(src.Reader(), &rsp); err != nil {
 		handler.Respond(w, fmt.Errorf("stream file (rsp): %w", err))
 		return
 	}
 	handler.Respond(w, sf)
-	if sf.Target.Path != "" { // 指定了目标文件，直接写入文件
-		proc := &app.StreamFile{Desc: &sf}
-		err = proc.Do(context.Background(), src)
-	} else { // 为指定时，在 RESPONSE 流中带回
-		sf.Target.Size, err = io.Copy(w, src)
-		if err == nil && sf.Target.Size != sf.Source.Size { // 将文件数据透传给 devctl 转写文件
-			err = entity.ErrFileCorrupted
-		}
+	// 在 RESPONSE 流中带回
+	sf.Target.Size, err = io.Copy(w, src)
+	if err == nil && sf.Target.Size != sf.Source.Size { // 将文件数据透传给 devctl 转写文件
+		err = entity.ErrFileCorrupted
 	}
 	if err != nil {
 		log.Warn("<devkit-server> failed to stream file:", err)

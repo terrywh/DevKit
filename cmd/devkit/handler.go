@@ -34,6 +34,7 @@ func (handler HandlerBase) Post(path string, req interface{}) (rsp *http.Respons
 		if payload, err = json.Marshal(req); err != nil {
 			return
 		}
+		log.Debug("post body: ", string(payload))
 		body = bytes.NewBuffer(payload)
 	}
 	return http.DefaultClient.Post(

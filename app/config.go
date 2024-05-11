@@ -4,6 +4,8 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"runtime"
+	"strings"
 	"sync/atomic"
 
 	"github.com/terrywh/devkit/infra/log"
@@ -13,6 +15,12 @@ import (
 var base string = initBase()
 
 func initBase() string {
+	for _, arg := range os.Args {
+		if strings.HasPrefix(arg, "-test.") || arg == "test" {
+			_, filename, _, _ := runtime.Caller(0)
+			return filepath.Dir(filepath.Dir(filename))
+		}
+	}
 	bin, _ := os.Executable()
 	base, _ := filepath.Abs(bin)
 	for i := 0; i < 5; i++ {

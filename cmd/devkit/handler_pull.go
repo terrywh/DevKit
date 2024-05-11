@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/terrywh/devkit/app"
 	"github.com/terrywh/devkit/entity"
@@ -25,18 +26,40 @@ func (handler *HandlerPull) InitFlag(flagCommand, flagGlobal *flag.FlagSet) {
 }
 
 func (handler *HandlerPull) Do(ctx context.Context) (err error) {
+	var files []entity.SelectFile
+	files, err = handler.doListFile(ctx)
+	if err != nil {
+		return
+	}
+	for _, file := range files {
+		if err = handler.doPullFile(ctx, file); err != nil {
+			return
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+	return
+}
+
+func (handler *HandlerPull) doListFile(ctx context.Context) (sf []entity.SelectFile, err error) {
 	var rsp *http.Response
-	if rsp, err = handler.Post(fmt.Sprintf("/file/pull?bash_pid=%d", os.Getppid()), nil); err != nil {
+	if rsp, err = handler.Post(fmt.Sprintf("/file/list?bash_pid=%d", os.Getppid()), nil); err != nil {
+		return nil, err
+	}
+	r := bufio.NewReader(rsp.Body)
+	err = app.Read(r, &sf)
+	return
+}
+
+func (handler *HandlerPull) doPullFile(ctx context.Context, file entity.SelectFile) (err error) {
+	var rsp *http.Response
+	if rsp, err = handler.Post(fmt.Sprintf("/file/pull?bash_pid=%d", os.Getppid()), file); err != nil {
 		return err
 	}
 	defer rsp.Body.Close()
 
 	wd, _ := os.Getwd()
-	sf := entity.StreamFile{
-		// Target: entity.File{} // 获取到文件流，不指定目标
-	}
-
 	r := bufio.NewReader(rsp.Body)
+	sf := entity.StreamFile{}
 	if err = app.Read(r, &sf); err != nil {
 		return err
 	}
